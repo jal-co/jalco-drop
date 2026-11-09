@@ -1,0 +1,23 @@
+---
+title: Upgrading
+description: Move a deployed site to a new release of jalco-drop.
+---
+
+jalco-drop follows semantic versioning. The version you're running shows in the footer of `/admin`. Every release is listed in the [changelog](/v1.0/changelog), and these docs keep a frozen copy for each minor version in the version menu.
+
+<Steps>
+<Step title="Read the changelog">
+Check the [changelog](/v1.0/changelog) for anything marked **Breaking** between your version and the new one.
+</Step>
+<Step title="Update the code">
+
+```bash
+npx jalco-drop upgrade
+```
+
+This pulls the latest release into your project, keeps your `wrangler.local.jsonc` and `.env`, and runs `npm install`. In a git clone, `git pull` and `npm install` do the same.
+</Step>
+<Step title="Deploy">
+`npm run deploy` on Cloudflare, or `docker compose up -d --build` on Docker. Settings, tokens and drops carry over: they live in storage, not in the code.
+</Step>
+</Steps>

@@ -4,6 +4,8 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
+## 1.1.0 (2026-11-09)
+
 - Text with terminal colour codes, such as test or build output, opens in colour.
 - JSON opens as a tree you can fold. JSON Lines opens as a table, one row per line.
 - Claude Code and Pi sessions open as a conversation: prompts, replies and one line per tool call. The CLI trims a session before uploading it, leaving thinking, tool output and your working directory on your machine.

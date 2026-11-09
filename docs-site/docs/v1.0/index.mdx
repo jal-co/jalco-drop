@@ -1,0 +1,48 @@
+---
+title: A self-hosted file transfer interface for people and agents
+description: Send a file, a folder, a paste or a screen recording and get a link that opens properly. It runs on your own Cloudflare account or any server with Docker.
+sidebar:
+  label: Introduction
+seo:
+  title: jalco-drop
+  image: /og/home.png
+---
+
+<AgentDemo />
+
+<script>{`if (matchMedia("(prefers-reduced-motion: reduce)").matches) for (const video of document.querySelectorAll("video[autoplay]")) { video.pause(); video.controls = true; }`}</script>
+
+<div className="deploy-buttons"><a className="deploy-button deploy-cloudflare" href="https://deploy.workers.cloudflare.com/?url=https://github.com/jal-co/jalco-drop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5088 16.8447c.1475-.5068.0908-.9707-.1553-1.3154-.2246-.3164-.6045-.499-1.0615-.5205l-8.6592-.1123a.1559.1559 0 0 1-.1333-.0713c-.0283-.042-.0351-.0986-.021-.1553.0278-.084.1123-.1484.2036-.1562l8.7359-.1123c1.0351-.0489 2.1601-.8868 2.5537-1.9136l.499-1.3013c.0215-.0561.0293-.1128.0147-.168-.5625-2.5463-2.835-4.4453-5.5499-4.4453-2.5039 0-4.6284 1.6177-5.3876 3.8614-.4927-.3658-1.1187-.5625-1.794-.499-1.2026.119-2.1665 1.083-2.2861 2.2856-.0283.31-.0069.6128.0635.894C1.5683 13.171 0 14.7754 0 16.752c0 .1748.0142.3515.0352.5273.0141.083.0844.1475.1689.1475h15.9814c.0909 0 .1758-.0645.2032-.1553l.12-.4268zm2.7568-5.5634c-.0771 0-.1611 0-.2383.0112-.0566 0-.1054.0415-.127.0976l-.3378 1.1744c-.1475.5068-.0918.9707.1543 1.3164.2256.3164.6055.498 1.0625.5195l1.8437.1133c.0557 0 .1055.0263.1329.0703.0283.043.0351.1074.0214.1562-.0283.084-.1132.1485-.204.1553l-1.921.1123c-1.041.0488-2.1582.8867-2.5527 1.914l-.1406.3585c-.0283.0713.0215.1416.0986.1416h6.5977c.0771 0 .1474-.0489.169-.126.1122-.4082.1757-.837.1757-1.2803 0-2.6025-2.125-4.727-4.7344-4.727" /></svg>Deploy to Cloudflare</a><a className="deploy-button deploy-render" href="https://render.com/deploy?repo=https://github.com/jal-co/jalco-drop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.263.007c-3.121-.147-5.744 2.109-6.192 5.082-.018.138-.045.272-.067.405-.696 3.703-3.936 6.507-7.827 6.507-1.388 0-2.691-.356-3.825-.979a.2024.2024 0 0 0-.302.178V24H12v-8.999c0-1.656 1.338-3 2.987-3h2.988c3.382 0 6.103-2.817 5.97-6.244-.12-3.084-2.61-5.603-5.682-5.75" /></svg>Deploy to Render</a></div>
+
+```bash
+npx jalco-drop init my-drop
+```
+
+## How it works
+
+**It opens like you made it.** Code is highlighted, markdown renders, CSV becomes a table, video and PDFs play in the page. A folder opens as a "sent you" page with a file tree, and a [Scrawl](https://scrawl.kitlangton.com) capture opens with its transcript beside the video.
+
+**The link is the permission.** Anyone who has it can open it, so the address is 10 random characters. Add a password and the server keeps the bytes back until it's entered. Add an expiry and the drop is deleted for you.
+
+**Bots get their own name.** A CI job or a chat bot uploads with its own token. Its drops say who sent them and carry its icon, and revoking the token stops it at once.
+
+**Agents can read what they're sent.** Add `?format=json` to any link to get its files, raw URLs, transcript and marked moments. Pages advertise it, so an agent that fetches the link finds it.
+
+**It's yours.** Your domain, your storage, your name on every share page. One Worker and an R2 bucket on Cloudflare, or one container with a disk or any S3 bucket.
+
+## For agents
+
+```bash
+npx skills add jal-co/jalco-drop
+```
+
+With the skill, an agent uploads with the right password and expiry, hands back the link, and reads any drop link you paste to it.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" href="/v1.0/quickstart" icon="rocket">
+    Deploy your own in a few minutes.
+  </Card>
+  <Card title="Agents" href="/v1.0/agents" icon="bot">
+    The skill, JSON links and the CLI.
+  </Card>
+</CardGroup>

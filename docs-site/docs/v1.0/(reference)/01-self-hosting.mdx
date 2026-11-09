@@ -1,0 +1,47 @@
+---
+title: Self-hosting
+description: Every setting for the Cloudflare Worker and the Docker container, and how storage, previews and expiry work on each.
+---
+
+jalco-drop is one app with two entry points: `src/worker.ts` for Cloudflare and `src/node.ts` for Node and Docker. Storage, rate limiting, preview cards and the hourly cleanup sit behind small interfaces, so both behave the same.
+
+| | Cloudflare | Docker |
+| --- | --- | --- |
+| Storage | R2 | A `/data` volume, or any S3-compatible bucket |
+| Preview cards | Browser Rendering | Chromium in the image |
+| Rate limit | Workers rate limiting, 60 a minute per IP | In memory, 60 a minute per IP |
+| Expiry cleanup | Hourly cron trigger | Hourly timer |
+| Largest upload | 100 MB (Cloudflare's limit) | `MAX_UPLOAD_MB`, default 100 |
+
+## Cloudflare
+
+Settings are `vars` in `wrangler.local.jsonc`, which setup writes from the `wrangler.jsonc` template. `npm run dev` and `npm run deploy` use it when it exists. The hostname is bound as a custom domain, so its zone must be on the same Cloudflare account. `ADMIN_TOKEN` is a secret:
+
+```bash
+npx wrangler secret put ADMIN_TOKEN -c wrangler.local.jsonc
+npm run deploy
+```
+
+## Docker
+
+Settings are environment variables, usually in `.env`:
+
+| Variable | Default | |
+| --- | --- | --- |
+| `ADMIN_TOKEN` | required | Signs in to `/admin` and signs session, unlock and card cookies |
+| `SITE_NAME`, `OWNER_NAME`, `ACCENT_COLOR`, `CODE_THEME`, `HOME_URL` | | Starting [settings](/v1.0/settings) |
+| `STORAGE` | `disk` | `disk` or `s3` |
+| `DATA_DIR` | `/data` | Where `disk` storage keeps files |
+| `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | | For `s3`: AWS S3, Backblaze B2, MinIO, or R2's S3 API |
+| `CHROME_PATH` | `/usr/bin/chromium` | Browser for preview cards |
+| `CARDS` | on | `off` skips preview cards |
+| `MAX_UPLOAD_MB` | `100` | Largest upload |
+| `TRUST_PROXY` | `true` | Read `X-Forwarded-*` from your reverse proxy |
+
+Run it behind a reverse proxy with TLS. Rotating `ADMIN_TOKEN` signs everyone out.
+
+## Security
+
+- Passwords are hashed with PBKDF2 and checked on the server. A locked drop never sends its bytes until it is unlocked.
+- Raw files are served with a sandboxing Content-Security-Policy, so an uploaded HTML or SVG file cannot run script on your domain.
+- `/` redirects away, nothing is listable without a token, random slugs are 10 characters, and pages send `noindex`. Link-preview bots are allowed in `robots.txt`; search crawlers are not.
