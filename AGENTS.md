@@ -62,7 +62,7 @@ For bots, create a named token under **Tokens** in `/admin` with only the permis
 
 ## Changing settings later
 
-Edit `vars` in `wrangler.jsonc` and run `npm run deploy`. Preview cards are cached per drop; existing ones keep their old colours until re-rendered.
+Use **Settings** in `/admin`; it applies straight away. Or edit `vars` in `wrangler.jsonc` and run `npm run deploy` (settings saved in the admin override the file). Preview cards are cached per drop; existing ones keep their old colours until re-rendered.
 
 ## Working on the code
 

@@ -6,7 +6,7 @@ import { site } from "@/view/site";
 
 export function AdminPage(props: AdminProps) {
   return (
-    <Document title={props.tab === "tokens" ? "Tokens" : "Drops"} islands>
+    <Document title={{ drops: "Drops", tokens: "Tokens", settings: "Settings" }[props.tab]} islands>
       <Island name="admin" component={AdminApp} props={{ ...props, siteName: site.name }} />
     </Document>
   );

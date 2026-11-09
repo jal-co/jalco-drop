@@ -1,5 +1,6 @@
 import { checkPassword, cookie, equalStrings, hashPassword, readCookie, sign, verify } from "./auth";
-import { describeText, highlight } from "./highlight";
+import { describeText, highlight, highlightBlock, isCodeName } from "./highlight";
+import { parseDelimited } from "./table";
 import { renderMarkdown } from "./markdown";
 import { canExtract, listZip, openEntry, type ZipEntry } from "./zip";
 import { AVATAR_MAX_BYTES, AVATAR_TYPES, avatarKey, createToken, findToken, listTokens, PERMISSIONS, revokeToken, type Permission, type TokenRecord } from "./tokens";
@@ -14,7 +15,8 @@ import { SharePage } from "./pages/share";
 import type { AdminProps } from "./islands/admin/types";
 import { clock, commonRoot, formatSize } from "./view/format";
 import { fragment, respond } from "./view/respond";
-import { readConfig } from "./config";
+import { CODE_THEMES, readConfig } from "./config";
+import { loadSettings, resetSettings, saveSettings, validateSettings } from "./settings";
 import { site } from "./view/site";
 import type { Card, Drop, Scrawl } from "./view/types";
 import puppeteer from "@cloudflare/puppeteer";
@@ -56,10 +58,22 @@ const MARKDOWN_NAME = /\.(md|markdown)$/i;
 const HTML_NAME = /\.html?$/i;
 const FRAME_SANDBOX = "sandbox allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox";
 const ZIP_NAME = /\.zip$/i;
-const IMAGE_EXTENSION_TYPES = new Map([["png", "image/png"], ["jpg", "image/jpeg"], ["jpeg", "image/jpeg"], ["gif", "image/gif"], ["webp", "image/webp"], ["avif", "image/avif"]]);
-const VIDEO_EXTENSION_TYPES = new Map([["mp4", "video/mp4"], ["m4v", "video/mp4"], ["mov", "video/quicktime"], ["webm", "video/webm"]]);
+type MediaKind = "image" | "video" | "audio" | "pdf";
+const MEDIA_EXTENSIONS = new Map<string, { kind: MediaKind; type: string }>([
+  ["png", { kind: "image", type: "image/png" }], ["jpg", { kind: "image", type: "image/jpeg" }], ["jpeg", { kind: "image", type: "image/jpeg" }],
+  ["gif", { kind: "image", type: "image/gif" }], ["webp", { kind: "image", type: "image/webp" }], ["avif", { kind: "image", type: "image/avif" }],
+  ["mp4", { kind: "video", type: "video/mp4" }], ["m4v", { kind: "video", type: "video/mp4" }], ["mov", { kind: "video", type: "video/quicktime" }], ["webm", { kind: "video", type: "video/webm" }],
+  ["mp3", { kind: "audio", type: "audio/mpeg" }], ["m4a", { kind: "audio", type: "audio/mp4" }], ["wav", { kind: "audio", type: "audio/wav" }],
+  ["ogg", { kind: "audio", type: "audio/ogg" }], ["oga", { kind: "audio", type: "audio/ogg" }], ["opus", { kind: "audio", type: "audio/ogg" }],
+  ["flac", { kind: "audio", type: "audio/flac" }], ["aac", { kind: "audio", type: "audio/aac" }],
+  ["pdf", { kind: "pdf", type: "application/pdf" }],
+]);
+const MEDIA_TYPE_KIND = /^(image\/(png|jpe?g|gif|webp|avif)|video\/|audio\/|application\/pdf$)/;
+const SVG_NAME = /\.svg$/i;
+const TABLE_NAMES = new Map<string, "," | "\t">([["csv", ","], ["tsv", "\t"]]);
+const PDF_CSP = "default-src 'none'; frame-ancestors 'self'";
+const SVG_CSP = "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:";
 const BYTE_RANGE = /^bytes=(\d*)-(\d*)$/;
-const INLINE_IMAGE_TYPE = /^image\/(png|jpe?g|gif|webp|avif)$/;
 const TEXT_EXTENSION = /\.(md|mdx|txt|json|jsonc|ya?ml|toml|ts|tsx|js|jsx|mjs|cjs|css|html|sh|zsh|py|rs|go|rb|swift|sql|env|ini|conf|log|csv|xml|svg)$/i;
 
 class HttpError extends Error {
@@ -192,6 +206,16 @@ const CARD_HEIGHT = 630;
 const CARD_FRAME_SECONDS = 60;
 const CARD_PAINT_TIMEOUT_MS = 15_000;
 const CARD_VERSION = "2";
+const THEME_SAMPLE = `export async function share(file: File) {
+  const link = await drop(file, { expires: "7d" });
+  return \`Sent \${file.name} (\${link})\`; // 42
+}`;
+
+function cardVersion() {
+  let hash = 5381;
+  for (const char of `${site.name}|${site.owner}|${site.accent}`) hash = (hash * 33) ^ char.charCodeAt(0);
+  return `${CARD_VERSION}${(hash >>> 0).toString(36)}`;
+}
 const cardKey = (slug: string) => `cards/${slug}`;
 
 async function removeDrop(env: Env, slug: string) {
@@ -225,23 +249,30 @@ async function findDrop(env: Env, slug: string) {
 
 const senderOf = (drop: Drop) => drop.sender ?? site.owner;
 
-const isText = (drop: Drop) => TEXT_TYPE.test(drop.type) || TEXT_EXTENSION.test(drop.name);
+const isTextName = (name: string) => TEXT_EXTENSION.test(name) || isCodeName(name);
+const isText = (drop: Drop) => TEXT_TYPE.test(drop.type) || isTextName(drop.name);
 
-const videoType = (drop: Drop) => VIDEO_EXTENSION_TYPES.get(extensionOf(drop.name)) ?? (drop.type.startsWith("video/") ? drop.type : undefined);
+function mediaOf(name: string, type = "") {
+  const byName = MEDIA_EXTENSIONS.get(extensionOf(name));
+  if (byName) return byName;
+  if (!MEDIA_TYPE_KIND.test(type)) return undefined;
+  const kind: MediaKind = type.startsWith("image/") ? "image" : type.startsWith("video/") ? "video" : type.startsWith("audio/") ? "audio" : "pdf";
+  return { kind, type };
+}
 const dropHref = (origin: string, drop: Drop) => `${origin}/${drop.slug}`;
 const rawUrl = (origin: string, drop: Drop) => `${dropHref(origin, drop)}/${encodeURIComponent(drop.name)}`;
 
-async function serveVideo(env: Env, object: R2Object, type: string, request: Request) {
+async function serveMedia(env: Env, object: R2Object, media: { kind: MediaKind; type: string }, request: Request) {
   const range = parseRange(request.headers.get("range"), object.size);
   if (range === null) return new Response(null, { status: 416, headers: { "content-range": `bytes */${object.size}` } });
   const body = await env.DROPS.get(object.key, range ? { range: { offset: range.start, length: range.end - range.start + 1 } } : {});
   if (!body) return respond(<NotFoundPage />, 404);
   const headers = new Headers({
-    "content-type": type,
+    "content-type": media.type,
     "content-length": String(range ? range.end - range.start + 1 : object.size),
     "accept-ranges": "bytes",
     "content-disposition": `inline; filename*=UTF-8''${encodeURIComponent(toDrop(object).name)}`,
-    "content-security-policy": "sandbox; default-src 'none'",
+    "content-security-policy": media.kind === "pdf" ? PDF_CSP : "sandbox; default-src 'none'",
     "x-content-type-options": "nosniff",
     "x-robots-tag": "noindex",
     "cache-control": "private, no-store",
@@ -251,11 +282,14 @@ async function serveVideo(env: Env, object: R2Object, type: string, request: Req
 }
 
 async function serveRaw(env: Env, object: R2Object, request: Request, download: boolean, render: boolean) {
-  const video = download ? undefined : videoType(toDrop(object));
-  if (video) return serveVideo(env, object, video, request);
+  const media = download ? undefined : mediaOf(toDrop(object).name, toDrop(object).type);
+  if (media) return serveMedia(env, object, media, request);
   const body = await env.DROPS.get(object.key);
   if (!body) return respond(<NotFoundPage />, 404);
   const drop = toDrop(object);
+  if (render && !download && SVG_NAME.test(drop.name)) {
+    return new Response(body.body, { headers: { "content-type": "image/svg+xml", "content-security-policy": SVG_CSP, "x-content-type-options": "nosniff", "x-robots-tag": "noindex", "cache-control": "private, no-store" } });
+  }
   if (render && !download && HTML_NAME.test(drop.name)) {
     return new Response(body.body, {
       headers: {
@@ -268,8 +302,8 @@ async function serveRaw(env: Env, object: R2Object, request: Request, download: 
       },
     });
   }
-  const inline = !download && (isText(drop) || INLINE_IMAGE_TYPE.test(drop.type));
-  const type = isText(drop) ? "text/plain; charset=utf-8" : inline ? drop.type : drop.type || "application/octet-stream";
+  const inline = !download && isText(drop);
+  const type = inline ? "text/plain; charset=utf-8" : drop.type || "application/octet-stream";
   return new Response(body.body, {
     headers: {
       "content-type": type,
@@ -286,26 +320,32 @@ async function serveRaw(env: Env, object: R2Object, request: Request, download: 
 async function textPreview(drop: Drop, text: string, source: boolean): Promise<Preview> {
   const { lines } = describeText(drop.name, text);
   const markdown = MARKDOWN_NAME.test(drop.name);
-  const renderable = markdown || HTML_NAME.test(drop.name);
-  if (renderable && !source) return markdown ? { kind: "markdown", html: await renderMarkdown(text), lines } : { kind: "frame", lines };
+  const delimiter = TABLE_NAMES.get(extensionOf(drop.name));
+  const renderable = markdown || delimiter !== undefined || HTML_NAME.test(drop.name) || SVG_NAME.test(drop.name);
+  if (renderable && !source) {
+    if (markdown) return { kind: "markdown", html: await renderMarkdown(text), lines };
+    if (delimiter) return { kind: "table", table: parseDelimited(text, delimiter), lines };
+    if (SVG_NAME.test(drop.name)) return { kind: "svg", lines };
+    return { kind: "frame", lines };
+  }
   return { kind: "code", html: (await highlight(drop.name, text)).html, lines, renderable };
 }
 
 async function serveDrop(env: Env, object: R2Object, origin: string, source: boolean) {
   const drop = toDrop(object);
   const card = await cardFor(env, object, origin);
-  if (!videoType(drop) && isText(drop) && drop.size <= TEXT_PREVIEW_BYTES) {
+  const media = mediaOf(drop.name, drop.type);
+  if (!media && isText(drop) && drop.size <= TEXT_PREVIEW_BYTES) {
     const body = await env.DROPS.get(object.key);
     const preview = await textPreview(drop, body ? await body.text() : "", source);
     return respond(<DropPage drop={drop} preview={preview} origin={origin} card={card} />);
   }
-  const video = videoType(drop);
-  if (INLINE_IMAGE_TYPE.test(drop.type)) {
+  if (media?.kind === "image") {
     card.image = rawUrl(origin, drop);
     card.imageSize = undefined;
   }
-  if (video) card.video = { url: rawUrl(origin, drop), type: video };
-  const preview: Preview = INLINE_IMAGE_TYPE.test(drop.type) ? { kind: "image" } : video ? { kind: "video" } : { kind: "file" };
+  if (media?.kind === "video") card.video = { url: rawUrl(origin, drop), type: media.type };
+  const preview: Preview = media ? { kind: media.kind } : { kind: "file" };
   return respond(<DropPage drop={drop} preview={preview} origin={origin} card={card} />);
 }
 
@@ -355,16 +395,17 @@ async function summarize(env: Env, object: R2Object): Promise<Summary> {
       return { title: root ? root.slice(0, -1) : drop.name, details: [`${entries.length} ${entries.length === 1 ? "file" : "files"}`, size] };
     }
   }
-  if (!videoType(drop) && isText(drop) && drop.size <= TEXT_PREVIEW_BYTES) {
+  if (!mediaOf(drop.name, drop.type) && isText(drop) && drop.size <= TEXT_PREVIEW_BYTES) {
     const body = await env.DROPS.get(object.key);
     const text = describeText(drop.name, body ? await body.text() : "");
     return { title: drop.name, details: [text.language, `${text.lines} ${text.lines === 1 ? "line" : "lines"}`, size] };
   }
   const extension = extensionOf(drop.name);
-  return { title: drop.name, details: [videoType(drop) ? "Video" : extension ? extension.toUpperCase() : "File", size] };
+  const label = { image: "Image", video: "Video", audio: "Audio", pdf: "PDF" }[mediaOf(drop.name, drop.type)?.kind ?? "image"];
+  return { title: drop.name, details: [mediaOf(drop.name, drop.type) ? label : extension ? extension.toUpperCase() : "File", size] };
 }
 
-const cardHref = (origin: string, object: R2Object) => `${origin}/${object.key}?card=${CARD_VERSION}-${object.etag.slice(0, 12)}`;
+const cardHref = (origin: string, object: R2Object) => `${origin}/${object.key}?card=${cardVersion()}-${object.etag.slice(0, 12)}`;
 
 async function cardFor(env: Env, object: R2Object, origin: string): Promise<Card> {
   const summary = await summarize(env, object);
@@ -396,9 +437,9 @@ async function renderCardImage(env: Env, object: R2Object, origin: string) {
 
 async function ensureCard(env: Env, object: R2Object, origin: string) {
   const stored = await env.DROPS.get(cardKey(object.key));
-  if (stored?.customMetadata?.etag === object.etag && stored.customMetadata.version === CARD_VERSION) return stored.body;
+  if (stored?.customMetadata?.etag === object.etag && stored.customMetadata.version === cardVersion()) return stored.body;
   const png = new Uint8Array(await renderCardImage(env, object, origin));
-  await env.DROPS.put(cardKey(object.key), png, { httpMetadata: { contentType: "image/png" }, customMetadata: { etag: object.etag, version: CARD_VERSION } });
+  await env.DROPS.put(cardKey(object.key), png, { httpMetadata: { contentType: "image/png" }, customMetadata: { etag: object.etag, version: cardVersion() } });
   return png;
 }
 
@@ -423,7 +464,7 @@ async function serveShare(env: Env, object: R2Object, origin: string) {
   const capture = await readScrawl(env, object, entries);
   if (capture) {
     const { scrawl, root } = capture;
-    card.video = { url: `${rawUrl(origin, drop)}?entry=${encodeURIComponent(`${root}${scrawl.video}`)}`, type: VIDEO_EXTENSION_TYPES.get(extensionOf(scrawl.video)) ?? "video/mp4" };
+    card.video = { url: `${rawUrl(origin, drop)}?entry=${encodeURIComponent(`${root}${scrawl.video}`)}`, type: mediaOf(scrawl.video)?.type ?? "video/mp4" };
     return respond(<ScrawlPage drop={drop} sender={senderOf(drop)} scrawl={scrawl} root={root} card={card} />);
   }
   return respond(<SharePage drop={drop} sender={senderOf(drop)} entries={entries} seed={await seedFor(object)} card={card} />);
@@ -433,12 +474,15 @@ async function entryPreview(env: Env, object: R2Object, entry: ZipEntry): Promis
   const rawHref = `/${object.key}/${encodeURIComponent(toDrop(object).name)}?entry=${encodeURIComponent(entry.path)}`;
   const extension = extensionOf(entry.path);
   if (!canExtract(entry)) return { kind: "note", text: "This file is encrypted or uses a compression method the preview cannot read. Download the zip to open it." };
-  if (IMAGE_EXTENSION_TYPES.has(extension)) return { kind: "image", url: rawHref };
-  if (VIDEO_EXTENSION_TYPES.has(extension)) return { kind: "video", url: rawHref };
+  const media = mediaOf(entry.path);
+  if (media) return { kind: media.kind, url: rawHref };
   if (HTML_NAME.test(entry.path)) return { kind: "frame", url: `${rawHref}&render=1` };
-  if (!TEXT_EXTENSION.test(entry.path) && extension) return { kind: "note", text: "No preview for this file." };
+  if (SVG_NAME.test(entry.path)) return { kind: "image", url: `${rawHref}&render=1` };
+  if (!isTextName(entry.path) && extension) return { kind: "note", text: "No preview for this file." };
   if (entry.size > TEXT_PREVIEW_BYTES) return { kind: "note", text: "This file is too large to preview." };
   const text = await new Response(await openEntry(env.DROPS, object.key, entry)).text();
+  const delimiter = TABLE_NAMES.get(extension);
+  if (delimiter) return { kind: "table", table: parseDelimited(text, delimiter) };
   return MARKDOWN_NAME.test(entry.path) ? { kind: "markdown", html: await renderMarkdown(text) } : { kind: "code", html: (await highlight(entry.path, text)).html };
 }
 
@@ -459,14 +503,16 @@ async function serveEntryRaw(env: Env, object: R2Object, entry: ZipEntry, reques
   const name = entry.path.split("/").pop()!;
   const extension = extensionOf(name);
   const html = render && !download && HTML_NAME.test(name);
-  const media = download ? undefined : IMAGE_EXTENSION_TYPES.get(extension) ?? VIDEO_EXTENSION_TYPES.get(extension);
-  const text = !download && !html && (TEXT_EXTENSION.test(name) || !extension);
+  const svg = render && !download && SVG_NAME.test(name);
+  const mediaKind = download ? undefined : mediaOf(name);
+  const media = svg ? "image/svg+xml" : mediaKind?.type;
+  const text = !download && !html && !svg && (isTextName(name) || !extension);
   const range = entry.method === 0 ? parseRange(request.headers.get("range"), entry.size) : undefined;
   if (range === null) return new Response(null, { status: 416, headers: { "content-range": `bytes */${entry.size}` } });
   const headers = new Headers({
     "content-type": html ? "text/html; charset=utf-8" : media || (text ? "text/plain; charset=utf-8" : "application/octet-stream"),
     "content-disposition": `${media || text || html ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(name)}`,
-    "content-security-policy": html ? `${FRAME_SANDBOX}; frame-ancestors 'self'` : "sandbox; default-src 'none'",
+    "content-security-policy": html ? `${FRAME_SANDBOX}; frame-ancestors 'self'` : svg ? SVG_CSP : mediaKind?.kind === "pdf" ? PDF_CSP : "sandbox; default-src 'none'",
     "x-content-type-options": "nosniff",
     "x-robots-tag": "noindex",
     "cache-control": "private, no-store",
@@ -479,11 +525,15 @@ async function serveEntryRaw(env: Env, object: R2Object, entry: ZipEntry, reques
   return new Response(await openEntry(env.DROPS, object.key, entry, range), { status: range ? 206 : 200, headers });
 }
 
-async function adminPage(env: Env, url: URL, state: Partial<Pick<AdminProps, "tab" | "created" | "error" | "newToken">>, status = 200) {
-  const tab = state.tab ?? (url.searchParams.get("tab") === "tokens" ? "tokens" : "drops");
-  const [drops, tokens] = await Promise.all([listDrops(env), listTokens(env.DROPS)]);
+const ADMIN_TABS: AdminProps["tab"][] = ["drops", "tokens", "settings"];
+
+async function adminPage(env: Env, url: URL, state: Partial<Pick<AdminProps, "tab" | "created" | "error" | "newToken" | "saved">>, status = 200) {
+  const requested = url.searchParams.get("tab");
+  const tab = state.tab ?? ADMIN_TABS.find((name) => name === requested) ?? "drops";
+  const [drops, tokens, stored] = await Promise.all([listDrops(env), listTokens(env.DROPS), loadSettings(env.DROPS)]);
   const adminDrops = drops.map((drop) => ({ ...drop, uploaded: drop.uploaded.toISOString() }));
-  return respond(<AdminPage {...state} tab={tab} drops={adminDrops} tokens={tokens} origin={url.origin} />, status);
+  const settings = { current: readConfig({ ...env, ...stored }), fromDeploy: readConfig(env), overridden: Object.keys(stored).length > 0 };
+  return respond(<AdminPage {...state} saved={state.saved ?? url.searchParams.has("saved")} tab={tab} drops={adminDrops} tokens={tokens} settings={settings} origin={url.origin} />, status);
 }
 
 async function route(request: Request, env: Env, context: ExecutionContext) {
@@ -549,6 +599,28 @@ async function route(request: Request, env: Env, context: ExecutionContext) {
     if (!equalStrings(token, env.ADMIN_TOKEN)) return respond(<LoginPage error="That token is not right." />, 401);
     const session = await sign(env.ADMIN_TOKEN, `admin:${Date.now() + ADMIN_SESSION_SECONDS * 1000}`);
     return redirect("/admin", { "set-cookie": cookie(ADMIN_COOKIE, session, { path: "/", maxAge: ADMIN_SESSION_SECONDS, sameSite: "Strict" }) });
+  }
+
+  if (pathname === "/admin/settings" && method === "POST") {
+    if (!(await admin())) throw new HttpError(401, "Sign in first.");
+    const result = validateSettings(await request.formData());
+    if ("error" in result) return adminPage(env, url, { tab: "settings", error: result.error }, 400);
+    await saveSettings(env.DROPS, result.vars);
+    return redirect("/admin?tab=settings&saved");
+  }
+
+  if (pathname === "/admin/settings/reset" && method === "POST") {
+    if (!(await admin())) throw new HttpError(401, "Sign in first.");
+    await resetSettings(env.DROPS);
+    return redirect("/admin?tab=settings&saved");
+  }
+
+  if (pathname === "/admin/theme-preview" && method === "GET") {
+    if (!(await admin())) throw new HttpError(401, "Sign in first.");
+    const requestedTheme = url.searchParams.get("theme");
+    const theme = CODE_THEMES.find((name) => name === requestedTheme);
+    if (!theme) throw new HttpError(400, "Unknown theme.");
+    return fragment(<div dangerouslySetInnerHTML={{ __html: await highlightBlock(THEME_SAMPLE, "ts", theme) }} />);
   }
 
   if (pathname === "/admin/logout" && method === "POST") {
@@ -624,7 +696,7 @@ async function route(request: Request, env: Env, context: ExecutionContext) {
 
 export default {
   async fetch(request, env, context) {
-    Object.assign(site, readConfig(env), { host: new URL(request.url).host });
+    Object.assign(site, readConfig({ ...env, ...(await loadSettings(env.DROPS)) }), { host: new URL(request.url).host });
     try {
       return await route(request, env, context);
     } catch (error) {

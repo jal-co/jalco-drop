@@ -40,6 +40,34 @@ const LANGUAGES = {
   vue: () => import("shiki/langs/vue.mjs"),
   xml: () => import("shiki/langs/xml.mjs"),
   yaml: () => import("shiki/langs/yaml.mjs"),
+  "csharp": () => import("shiki/langs/csharp.mjs"),
+  "dart": () => import("shiki/langs/dart.mjs"),
+  "elixir": () => import("shiki/langs/elixir.mjs"),
+  "erlang": () => import("shiki/langs/erlang.mjs"),
+  "haskell": () => import("shiki/langs/haskell.mjs"),
+  "scala": () => import("shiki/langs/scala.mjs"),
+  "zig": () => import("shiki/langs/zig.mjs"),
+  "r": () => import("shiki/langs/r.mjs"),
+  "perl": () => import("shiki/langs/perl.mjs"),
+  "powershell": () => import("shiki/langs/powershell.mjs"),
+  "nginx": () => import("shiki/langs/nginx.mjs"),
+  "hcl": () => import("shiki/langs/hcl.mjs"),
+  "terraform": () => import("shiki/langs/terraform.mjs"),
+  "prisma": () => import("shiki/langs/prisma.mjs"),
+  "proto": () => import("shiki/langs/proto.mjs"),
+  "dotenv": () => import("shiki/langs/dotenv.mjs"),
+  "latex": () => import("shiki/langs/latex.mjs"),
+  "ocaml": () => import("shiki/langs/ocaml.mjs"),
+  "clojure": () => import("shiki/langs/clojure.mjs"),
+  "julia": () => import("shiki/langs/julia.mjs"),
+  "nix": () => import("shiki/langs/nix.mjs"),
+  "solidity": () => import("shiki/langs/solidity.mjs"),
+  "objective-c": () => import("shiki/langs/objective-c.mjs"),
+  "fsharp": () => import("shiki/langs/fsharp.mjs"),
+  "groovy": () => import("shiki/langs/groovy.mjs"),
+  "log": () => import("shiki/langs/log.mjs"),
+  "csv": () => import("shiki/langs/csv.mjs"),
+  "tsv": () => import("shiki/langs/tsv.mjs"),
 };
 
 type Language = keyof typeof LANGUAGES;
@@ -49,6 +77,9 @@ const EXTENSIONS = {
   js: "javascript", mjs: "javascript", cjs: "javascript", ts: "typescript", mts: "typescript", cts: "typescript",
   md: "markdown", markdown: "markdown", py: "python", rb: "ruby", rs: "rust", kt: "kotlin", yml: "yaml",
   htm: "html", svg: "xml", gql: "graphql", patch: "diff", mk: "make", makefile: "make", dockerfile: "dockerfile",
+  cs: "csharp", ex: "elixir", exs: "elixir", erl: "erlang", hs: "haskell", sc: "scala", pl: "perl", ps1: "powershell",
+  tf: "terraform", tfvars: "terraform", tex: "latex", ml: "ocaml", clj: "clojure", cljs: "clojure", jl: "julia", sol: "solidity",
+  m: "objective-c", fs: "fsharp", gradle: "groovy", kts: "kotlin", mm: "objective-c",
 } satisfies Record<string, Language>;
 
 const EXTENSION_LANGUAGES = new Map<string, Language>(Object.entries(EXTENSIONS));
@@ -56,7 +87,8 @@ const EXTENSION_LANGUAGES = new Map<string, Language>(Object.entries(EXTENSIONS)
 const TITLES: Partial<Record<Language, string>> = {
   bash: "Shell", cpp: "C++", css: "CSS", graphql: "GraphQL", html: "HTML", ini: "INI", javascript: "JavaScript", json: "JSON",
   jsonc: "JSON", jsx: "JSX", make: "Makefile", mdx: "MDX", php: "PHP", scss: "SCSS", sql: "SQL", toml: "TOML", tsx: "TSX",
-  typescript: "TypeScript", xml: "XML", yaml: "YAML",
+  typescript: "TypeScript", xml: "XML", yaml: "YAML", csharp: "C#", fsharp: "F#", hcl: "HCL", "objective-c": "Objective-C",
+  dotenv: "Env", latex: "LaTeX", ocaml: "OCaml", csv: "CSV", tsv: "TSV", log: "Plain text", proto: "Protobuf", nginx: "Nginx",
 };
 
 const pierre: ThemeRegistration = {
@@ -102,10 +134,10 @@ function languageFor(name: string): Language | null {
   return EXTENSION_LANGUAGES.get(extension) ?? null;
 }
 
-async function shikiFor(language: Language | null) {
+async function shikiFor(language: Language | null, theme: CodeTheme = site.codeTheme) {
   highlighter ??= createHighlighterCore({ themes: [], langs: [], engine: createJavaScriptRegexEngine({ forgiving: true }) });
   const shiki = await highlighter;
-  if (!shiki.getLoadedThemes().includes(site.codeTheme)) await shiki.loadTheme(await THEMES[site.codeTheme]());
+  if (!shiki.getLoadedThemes().includes(theme)) await shiki.loadTheme(await THEMES[theme]());
   const needed: Language[] = language === "markdown" || language === "mdx" ? ["yaml", language] : language ? [language] : [];
   for (const lang of needed) {
     if (!shiki.getLoadedLanguages().includes(lang)) await shiki.loadLanguage(await LANGUAGES[lang]());
@@ -113,10 +145,10 @@ async function shikiFor(language: Language | null) {
   return shiki;
 }
 
-export async function highlightBlock(code: string, fence: string | undefined) {
+export async function highlightBlock(code: string, fence: string | undefined, theme: CodeTheme = site.codeTheme) {
   const language = fence ? languageFor(fence.split(/\s/)[0]) : null;
-  const shiki = await shikiFor(language);
-  return shiki.codeToHtml(code.replace(/\n$/, ""), { lang: language ?? "text", theme: site.codeTheme });
+  const shiki = await shikiFor(language, theme);
+  return shiki.codeToHtml(code.replace(/\n$/, ""), { lang: language ?? "text", theme });
 }
 
 const titleFor = (language: Language | null) => language ? (TITLES[language] ?? language[0].toUpperCase() + language.slice(1)) : "Plain text";
@@ -154,3 +186,5 @@ export async function highlight(name: string, text: string): Promise<Highlighted
   });
   return { html, language: titleFor(language), lines: lineCount };
 }
+
+export const isCodeName = (name: string) => languageFor(name) !== null;

@@ -7,14 +7,17 @@ import { CopyLabelButton } from "@/view/copy-button";
 import { DropsList } from "./drops-list";
 import { NewDropDialog } from "./new-drop-dialog";
 import { NewTokenDialog } from "./new-token-dialog";
+import { SettingsForm } from "./settings-form";
 import { NewTokenCard, TokensList } from "./tokens-list";
 import type { AdminProps } from "./types";
 
-function SectionTab({ href, label, count, active }: { href: string; label: string; count: number; active: boolean }) {
+const TAB_TITLES: Record<AdminProps["tab"], string> = { drops: "Drops", tokens: "Tokens", settings: "Settings" };
+
+function SectionTab({ href, label, count, active }: { href: string; label: string; count?: number; active: boolean }) {
   return (
     <a href={href} aria-current={active ? "page" : undefined} className={cn(buttonVariants({ variant: "ghost", size: "sm" }), active && "bg-fill text-foreground shadow-rim")}>
       {label}
-      <span className="font-mono text-xs text-muted-foreground tabular-nums">{count}</span>
+      {count !== undefined && <span className="font-mono text-xs text-muted-foreground tabular-nums">{count}</span>}
     </a>
   );
 }
@@ -41,20 +44,25 @@ export function AdminApp({ siteName, ...props }: AdminProps & { siteName: string
         <nav aria-label="Sections" className="flex gap-1">
           <SectionTab href="/admin" label="Drops" count={props.drops.length} active={props.tab === "drops"} />
           <SectionTab href="/admin?tab=tokens" label="Tokens" count={props.tokens.length} active={props.tab === "tokens"} />
+          <SectionTab href="/admin?tab=settings" label="Settings" active={props.tab === "settings"} />
         </nav>
         <div className="ml-auto flex items-center gap-1.5">
-          {props.tab === "drops" ? <NewDropDialog /> : <NewTokenDialog />}
+          {props.tab === "drops" && <NewDropDialog />}
+          {props.tab === "tokens" && <NewTokenDialog />}
           <form method="post" action="/admin/logout">
             <Button type="submit" variant="ghost">Sign out</Button>
           </form>
         </div>
       </header>
       <main id="main" className="mx-auto flex max-w-5xl flex-col gap-4 px-3 pt-8 pb-24 sm:px-6">
-        <h1 className="sr-only">{props.tab === "drops" ? "Drops" : "Tokens"}</h1>
+        <h1 className="sr-only">{TAB_TITLES[props.tab]}</h1>
+        {props.saved && <p role="status" className="rounded-xl bg-fill px-4 py-3 text-sm shadow-rim">Settings saved. Existing preview cards re-render the next time they are shared.</p>}
         {props.created && <CreatedNotice origin={props.origin} slug={props.created} />}
         {props.error && <p role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{props.error}</p>}
         {props.newToken && <NewTokenCard token={props.newToken.token} name={props.newToken.name} />}
-        {props.tab === "drops" ? <DropsList drops={props.drops} origin={props.origin} /> : <TokensList tokens={props.tokens} />}
+        {props.tab === "drops" && <DropsList drops={props.drops} origin={props.origin} />}
+        {props.tab === "tokens" && <TokensList tokens={props.tokens} />}
+        {props.tab === "settings" && <SettingsForm settings={props.settings} />}
       </main>
     </TooltipProvider>
   );

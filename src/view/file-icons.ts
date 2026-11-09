@@ -19,8 +19,10 @@ import { faVuejs } from "@fortawesome/free-brands-svg-icons/faVuejs";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { faDatabase } from "@fortawesome/free-solid-svg-icons/faDatabase";
 import { faFile } from "@fortawesome/free-solid-svg-icons/faFile";
+import { faFileAudio } from "@fortawesome/free-solid-svg-icons/faFileAudio";
 import { faFileCode } from "@fortawesome/free-solid-svg-icons/faFileCode";
 import { faFileCsv } from "@fortawesome/free-solid-svg-icons/faFileCsv";
+import { faFileVideo } from "@fortawesome/free-solid-svg-icons/faFileVideo";
 import { faFileImage } from "@fortawesome/free-solid-svg-icons/faFileImage";
 import { faFileLines } from "@fortawesome/free-solid-svg-icons/faFileLines";
 import { faFilePdf } from "@fortawesome/free-solid-svg-icons/faFilePdf";
@@ -45,9 +47,11 @@ const BY_EXTENSION = new Map<string, IconDefinition>([
   ["html", faHtml5], ["htm", faHtml5], ["css", faCss3], ["scss", faSass], ["sass", faSass], ["vue", faVuejs], ["svelte", faSvelte],
   ["sh", faTerminal], ["bash", faTerminal], ["zsh", faTerminal], ["fish", faTerminal],
   ["sql", faDatabase], ["csv", faFileCsv], ["pdf", faFilePdf],
-  ["json", faFileCode], ["jsonc", faFileCode], ["xml", faFileCode], ["svg", faFileCode],
+  ["json", faFileCode], ["jsonc", faFileCode], ["xml", faFileCode], ["svg", faFileImage],
   ["yml", faGear], ["yaml", faGear], ["toml", faGear], ["ini", faGear], ["env", faGear], ["conf", faGear],
   ["zip", faFileZipper], ["gz", faFileZipper], ["tgz", faFileZipper], ["tar", faFileZipper], ["7z", faFileZipper],
+  ["mp3", faFileAudio], ["m4a", faFileAudio], ["wav", faFileAudio], ["ogg", faFileAudio], ["oga", faFileAudio], ["opus", faFileAudio], ["flac", faFileAudio], ["aac", faFileAudio],
+  ["tsv", faFileCsv], ["mp4", faFileVideo], ["mov", faFileVideo], ["webm", faFileVideo], ["m4v", faFileVideo],
   ["png", faFileImage], ["jpg", faFileImage], ["jpeg", faFileImage], ["gif", faFileImage], ["webp", faFileImage], ["avif", faFileImage],
   ["txt", faFileLines], ["log", faFileLines],
 ]);

@@ -6,7 +6,7 @@ Upload a file, a folder, a paste or a screen recording, and get back a link wort
 
 - **Code and text** open highlighted with Shiki in the theme you choose, with line links (`#L12`).
 - **Markdown** renders as a document, frontmatter as a properties list. **HTML** runs in a sandboxed frame. `?view=source` shows either as source.
-- **Images and videos** preview in the page. Videos seek by byte range.
+- **Images, video and audio** preview in the page and seek by byte range. **PDFs** open in the browser's viewer, **CSV/TSV** as a table, and **SVG** as an image in a sandbox.
 - **Zips and folders** open as a "sent you" page with a file tree, a preview drawer, and a [Paper](https://shaders.paper.design/) Grain Gradient whose shape and motion come from the upload's checksum.
 - **Scrawl captures** open as a video page with the transcript and each marked moment.
 - **Link previews** carry a 1200x630 card with the real gradient, rendered once in Cloudflare Browser Rendering after upload, plus `og:video` for recordings.
@@ -29,7 +29,7 @@ npx jalco-drop init my-drop --domain drop.example.com --owner Tess --accent "#3b
 
 In a clone, run `npm install && npm run setup` instead. Handing the repo to a coding agent works too: [AGENTS.md](AGENTS.md) walks it through the same steps.
 
-Settings live in `vars` in `wrangler.jsonc`: `SITE_NAME`, `OWNER_NAME`, `ACCENT_COLOR`, `CODE_THEME` and `HOME_URL`. Change one and run `npm run deploy`.
+Settings start from `vars` in `wrangler.jsonc`: `SITE_NAME`, `OWNER_NAME`, `ACCENT_COLOR`, `CODE_THEME` and `HOME_URL`. After deploying, change them under **Settings** in `/admin`, with a live preview. Saved settings are stored in R2 and override the file without a redeploy; **Reset to deploy values** goes back to the file.
 
 `ADMIN_TOKEN` is the master key. It signs in to `/admin` and signs session, unlock and card cookies, so rotating it signs everyone out.
 

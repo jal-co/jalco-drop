@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { ChevronRightIcon, DownloadIcon, FolderIcon } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import { ChevronRightIcon, DownloadIcon, FolderIcon, XIcon } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import { FileIcon } from "@/view/file-icon";
 import { formatSize } from "@/view/format";
@@ -88,8 +88,8 @@ export function ShareFiles({ entries, root, rawHref }: { entries: ShareEntry[]; 
         <TreeList node={tree} openAll={entries.length <= OPEN_ALL_ENTRIES} onOpen={setOpen} />
       </div>
       <Sheet open={open !== undefined} onOpenChange={(next) => { if (!next) setOpen(undefined); }}>
-        <SheetContent side="right" className="gap-0 bg-[var(--viewer-bg)] p-0">
-          <SheetHeader className="flex-row items-center gap-2 border-b border-border py-2 pr-12 pl-5">
+        <SheetContent side="right" showCloseButton={false} className="gap-0 bg-[var(--viewer-bg)] p-0">
+          <SheetHeader className="h-14 flex-row items-center gap-1 space-y-0 border-b border-border py-0 pr-2.5 pl-5">
             <SheetTitle className="min-w-0 flex-1 truncate text-sm">{open?.path.split("/").pop()}</SheetTitle>
             {open && (
               <a href={`${rawHref}?entry=${encodeURIComponent(open.path)}&download=1`} download className={buttonVariants({ variant: "ghost", size: "sm" })}>
@@ -97,6 +97,9 @@ export function ShareFiles({ entries, root, rawHref }: { entries: ShareEntry[]; 
                 Download
               </a>
             )}
+            <SheetClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" />}>
+              <XIcon />
+            </SheetClose>
           </SheetHeader>
           <div className="drawer-body min-h-0 flex-1 overflow-auto">{open && <EntryPreview key={open.path} path={open.path} />}</div>
         </SheetContent>

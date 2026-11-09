@@ -693,3 +693,94 @@
   }
 }
 
+
+.viewer-table {
+  padding: 4.5rem 0.75rem 3.5rem;
+}
+
+.data-table {
+  max-width: 100%;
+  overflow: auto;
+  border-radius: 1rem;
+  background: var(--card);
+  box-shadow: var(--shadow-raised);
+}
+
+.drawer-body .data-table {
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.data-table table {
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table th,
+.data-table td {
+  max-width: 24rem;
+  padding: 0.5rem 0.875rem;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--card);
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.data-table td {
+  color: oklch(0.85 0 0);
+}
+
+.data-table .row-number,
+.data-table th:first-child {
+  position: sticky;
+  left: 0;
+  width: 1%;
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.data-table th:first-child {
+  z-index: 2;
+}
+
+.data-table-note {
+  margin: 0;
+  padding: 0.75rem 0.875rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+.stage-checker img {
+  background: repeating-conic-gradient(oklch(0.24 0 0) 0 25%, oklch(0.2 0 0) 0 50%) 0 0 / 16px 16px;
+}
+
+.frame-pdf {
+  background: oklch(0.2 0 0);
+}
+
+.theme-preview .shiki {
+  margin: 0;
+  background: var(--viewer-bg) !important;
+  padding: 0.875rem 1rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.7;
+}

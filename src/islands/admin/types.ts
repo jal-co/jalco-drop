@@ -1,10 +1,15 @@
+import type { SiteConfig } from "@/config";
 import type { Permission, TokenRecord } from "@/tokens";
 import type { Drop } from "@/view/types";
 
 export type AdminDrop = Omit<Drop, "uploaded"> & { uploaded: string };
 
+export type SettingsState = { current: SiteConfig; fromDeploy: SiteConfig; overridden: boolean };
+
 export type AdminProps = {
-  tab: "drops" | "tokens";
+  tab: "drops" | "tokens" | "settings";
+  settings: SettingsState;
+  saved?: boolean;
   drops: AdminDrop[];
   tokens: TokenRecord[];
   origin: string;

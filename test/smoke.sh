@@ -2,6 +2,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+wait_for_rate_limit_window() { sleep 61; }
 port=8799
 work="$(mktemp -d)"
 export JALCO_DROP_URL="http://localhost:$port"
@@ -82,6 +83,21 @@ check "video drop has a playable link preview" yes "$(curl -s "$video_url" | con
 check "video drop seeks by range" 206 "$(status -H 'Range: bytes=0-3' "$video_url/clip.mp4")"
 check "locked drop has no link preview" no "$(curl -s "$secret_url" | contains 'og:')"
 
+printf 'name,notes\nalpha,"comma, inside"\n' >"$work/data.csv"
+csv_url="$(bin/jalco-drop "$work/data.csv" 2>/dev/null)"
+check "csv renders as a table" yes "$(curl -s "$csv_url" | contains 'comma, inside</td>')"
+check "csv source view" yes "$(curl -s "$csv_url?view=source" | contains 'class="line"')"
+printf '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>' >"$work/logo.svg"
+svg_url="$(bin/jalco-drop "$work/logo.svg" 2>/dev/null)"
+check "svg renders as an image" yes "$(curl -s "$svg_url" | contains 'logo.svg?render=1')"
+check "rendered svg is sandboxed" yes "$(curl -sI "$svg_url/logo.svg?render=1" | contains 'content-security-policy: sandbox')"
+printf 'ID3fake' >"$work/song.mp3"
+mp3_url="$(bin/jalco-drop "$work/song.mp3" 2>/dev/null)"
+check "audio plays in the page" yes "$(curl -s "$mp3_url" | contains '<audio')"
+check "audio seeks by range" 206 "$(status -H 'Range: bytes=0-1' "$mp3_url/song.mp3")"
+printf 'defmodule Hi do\nend\n' >"$work/hi.ex"
+check "more languages are highlighted" yes "$(curl -s "$(bin/jalco-drop "$work/hi.ex" 2>/dev/null)" | contains 'class="shiki')"
+
 check "taken slug is refused" 1 "$(bin/jalco-drop -s my-skill README.md >/dev/null 2>&1; echo $?)"
 
 xss_url="$(printf '<script>alert(1)</script>' | bin/jalco-drop 2>/dev/null)"
@@ -116,6 +132,7 @@ check "expired drop waits for cleanup" 1 "$(stored swept)"
 curl -s "$JALCO_DROP_URL/__scheduled?cron=0+*+*+*+*" >/dev/null
 check "hourly cleanup deletes expired drops" 0 "$(stored swept)"
 
+wait_for_rate_limit_window
 check "admin page asks to sign in" yes "$(curl -s "$JALCO_DROP_URL/admin" | contains 'Admin token')"
 check "wrong admin token is rejected" 401 "$(status -d token=nope "$JALCO_DROP_URL/admin/login")"
 check "admin login" 303 "$(status -c "$work/admin" -d "token=$JALCO_DROP_TOKEN" "$JALCO_DROP_URL/admin/login")"
@@ -127,8 +144,18 @@ check "cross-site form post is refused" 401 "$(status -b "$work/admin" -H "Origi
 bin/jalco-drop -d my-skill >/dev/null
 check "deleted drop is gone" 404 "$(status "$zip_url")"
 
-wait_for_rate_limit_window() { sleep 61; }
 wait_for_rate_limit_window
+settings() { curl -s -o /dev/null -w '%{http_code}' -b "$work/admin" -H "Origin: $JALCO_DROP_URL" "$@" "$JALCO_DROP_URL/admin/settings"; }
+check "settings save" 303 "$(settings -d name=Smoke%20Drop -d owner=Robin -d accent=%2312ab34 -d theme=vesper -d home=https://example.com/)"
+check "settings apply without a redeploy" yes "$(curl -s "$JALCO_DROP_URL/nope" | contains 'Smoke Drop')"
+check "accent applies" yes "$(curl -s "$JALCO_DROP_URL/nope" | contains '--marker:#12ab34')"
+check "home redirect applies" "https://example.com/" "$(curl -s -o /dev/null -w '%{redirect_url}' "$JALCO_DROP_URL/")"
+check "invalid settings are refused" 400 "$(settings -d name=x -d owner=y -d accent=red -d theme=vesper -d home=https://example.com/)"
+check "settings need the admin session" 401 "$(curl -s -o /dev/null -w '%{http_code}' -H "Origin: $JALCO_DROP_URL" -d name=x "$JALCO_DROP_URL/admin/settings")"
+check "theme preview needs the admin session" 401 "$(status "$JALCO_DROP_URL/admin/theme-preview?theme=vesper")"
+check "theme preview renders" yes "$(curl -s -b "$work/admin" "$JALCO_DROP_URL/admin/theme-preview?theme=nord" | contains 'shiki nord')"
+check "settings reset" 303 "$(curl -s -o /dev/null -w '%{http_code}' -b "$work/admin" -H "Origin: $JALCO_DROP_URL" -X POST "$JALCO_DROP_URL/admin/settings/reset")"
+check "reset restores deploy values" no "$(curl -s "$JALCO_DROP_URL/nope" | contains 'Smoke Drop')"
 new_token() { curl -s -b "$work/admin" -H "Origin: $JALCO_DROP_URL" "$@" "$JALCO_DROP_URL/admin/tokens" | grep -o 'jd_[A-Za-z0-9_-]*' | head -1; }
 bot_token="$(new_token -F name=Grokbot -F "sender=Justin’s Grokbot" -F permissions=upload -F "avatar=@public/favicon.png;type=image/png")"
 check "admin can create a token" yes "$(contains jd_ <<<"$bot_token")"
