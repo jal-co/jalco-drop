@@ -25,6 +25,7 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${port}`,
     trace: "retain-on-failure",
+    reducedMotion: "reduce",
     screenshot: "only-on-failure",
   },
   projects: [
