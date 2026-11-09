@@ -100,7 +100,7 @@ const projectDir = command === "init" ? resolve(positionals[1] ?? "jalco-drop") 
 if (command === "init") copyProject(projectDir);
 if (!existsSync(join(projectDir, "wrangler.example.jsonc"))) fail("Run this inside a jalco-drop checkout, or use npx jalco-drop init.");
 
-console.log("\nConfigure your drop site. Press Enter to keep a default.\n");
+if (prompt) console.log("\nConfigure your drop site. Press Enter to keep a default.\n");
 const domain = (await ask("Domain to serve from", { flag: flags.domain, valid: (value) => HOSTNAME.test(value), hint: "A hostname like drop.example.com. Its zone must be on your Cloudflare account." })).toLowerCase();
 const owner = await ask("Your name, as in \"Justin sent you\"", { flag: flags.owner, fallback: DEFAULTS.owner, valid: (value) => value.length > 0 && value.length <= 60, hint: "1 to 60 characters." });
 const name = await ask("Site name", { flag: flags.name, fallback: DEFAULTS.name, valid: (value) => value.length > 0 && value.length <= 40, hint: "1 to 40 characters." });
@@ -118,7 +118,7 @@ console.log(`\nWrote wrangler.jsonc for https://${domain}`);
 
 if (!(await confirm("\nCreate the R2 bucket, deploy, and set a new admin token now?"))) {
   prompt?.close();
-  console.log(`\nWhen you're ready:\n  cd ${relative(process.cwd(), projectDir) || "."}\n  npx wrangler r2 bucket create ${bucket}\n  npm run deploy\n  npx wrangler secret put ADMIN_TOKEN`);
+  console.log(`\nWhen you're ready:\n${relative(process.cwd(), projectDir) ? `  cd ${relative(process.cwd(), projectDir)}\n` : ""}  npx wrangler r2 bucket create ${bucket}\n  npm run deploy\n  npx wrangler secret put ADMIN_TOKEN`);
   process.exit(0);
 }
 prompt?.close();
