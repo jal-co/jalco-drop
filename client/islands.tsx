@@ -1,5 +1,5 @@
 import { hydrateRoot } from "react-dom/client";
-import type { ComponentProps, ReactElement } from "react";
+import { useEffect, type ComponentProps, type ReactElement, type ReactNode } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { islandPrefix, type IslandName } from "@/view/island-names";
 
@@ -30,10 +30,17 @@ const ISLANDS: Record<IslandName, (props: string) => Promise<ReactElement>> = {
   },
 };
 
+function MarkHydrated({ element, children }: { element: HTMLElement; children: ReactNode }) {
+  useEffect(() => {
+    element.dataset.hydrated = "";
+  }, [element]);
+  return children;
+}
+
 const isIslandName = (value: string | undefined): value is IslandName => value !== undefined && Object.hasOwn(ISLANDS, value);
 
 for (const element of document.querySelectorAll<HTMLElement>("[data-island]")) {
   const name = element.dataset.island;
   if (!isIslandName(name)) continue;
-  ISLANDS[name](element.dataset.props ?? "{}").then((island) => hydrateRoot(element, <TooltipProvider>{island}</TooltipProvider>, { identifierPrefix: islandPrefix(name) }));
+  ISLANDS[name](element.dataset.props ?? "{}").then((island) => hydrateRoot(element, <MarkHydrated element={element}><TooltipProvider>{island}</TooltipProvider></MarkHydrated>, { identifierPrefix: islandPrefix(name) }));
 }

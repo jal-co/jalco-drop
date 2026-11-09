@@ -34,6 +34,7 @@ export type Env = {
   ACCENT_COLOR?: string;
   CODE_THEME?: string;
   HOME_URL?: string;
+  RATE_LIMIT?: string;
 };
 
 type DropMetadata = {
@@ -542,7 +543,7 @@ async function route(request: Request, env: Env, context: Background) {
   if (pathname === "/") return Response.redirect(site.homeUrl, 302);
 
   const limitKey = url.searchParams.has("card-frame") ? "card-frame" : request.headers.get("cf-connecting-ip") ?? "local";
-  const { success } = await env.REQUEST_LIMITER.limit({ key: limitKey });
+  const { success } = env.RATE_LIMIT === "off" ? { success: true } : await env.REQUEST_LIMITER.limit({ key: limitKey });
   if (!success) {
     throw new HttpError(429, "Too many requests. Try again in a minute.");
   }

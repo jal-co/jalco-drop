@@ -10,8 +10,9 @@ Usage:
 
 Moves the "## Unreleased" notes in CHANGELOG.md under the new version, freezes
 the previous docs as an archived Blume version on a minor or major bump, bumps
-package.json, runs the checks, commits, tags, pushes, creates a GitHub release,
-and deploys the app and the docs.`;
+package.json, runs the typecheck, smoke and end-to-end tests on Cloudflare and Node,
+builds the docs, commits, tags, pushes, creates a GitHub release, deploys
+the app and the docs, and checks the live sites serve the new version.`;
 
 const { values: flags, positionals } = parseArgs({
   allowPositionals: true,
@@ -71,7 +72,10 @@ if (!dryRun) {
 
 step("Install", "npm", ["install"]);
 step("Typecheck", "npm", ["run", "typecheck"]);
-step("Smoke tests", "npm", ["test"]);
+step("Smoke tests (Worker)", "npm", ["test"]);
+step("Smoke tests (Node)", "npm", ["run", "test:node"]);
+step("End-to-end tests (Worker)", "npm", ["run", "test:e2e"]);
+step("End-to-end tests (Node)", "npm", ["run", "test:e2e:node"]);
 step("Docs build", "npm", ["run", "build"], "docs-site");
 step("Stage", "git", ["add", "-A"]);
 step("Commit", "git", ["commit", "-m", `release: ${tag}`]);
@@ -81,5 +85,6 @@ step("GitHub release", "gh", ["release", "create", tag, "--title", tag, "--notes
 if (!flags["no-deploy"]) {
   step("Deploy the app", "npm", ["run", "deploy"]);
   step("Deploy the docs", "npm", ["run", "deploy"], "docs-site");
+  step("Check the live sites", "npm", ["run", "test:live"]);
 }
 console.log(`\n${dryRun ? "Dry run done" : `Released ${tag}`}.`);

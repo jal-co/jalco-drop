@@ -4,6 +4,10 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
+- Playwright end-to-end tests for every flow, on Cloudflare and Node, run in CI and before each release, plus a live check after deploy.
+- Docs match the app's type scale and colours.
+- `RATE_LIMIT=off` disables the per-IP limit (used by the test servers).
+
 ## 1.0.0 (2026-11-09)
 
 The first release.

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { site } from "./site";
+import { site, VERSION } from "./site";
 import type { Card } from "./types";
 
 function CardTags({ title, card }: { title: string; card: Card }) {
@@ -38,6 +38,7 @@ export function Document({ title, card, islands, grain, forms, code, bodyClassNa
         <meta name="theme-color" content="#0a0a0a" />
         <meta name="color-scheme" content="dark" />
         <meta name="robots" content="noindex" />
+        <meta name="generator" content={`jalco-drop ${VERSION}`} />
         <title>{title}</title>
         {card && <CardTags title={title} card={card} />}
         <link rel="icon" href="/favicon.png" />

@@ -1,20 +1,178 @@
 :root[data-theme="dark"] {
-  --blume-background: #0a0a0a;
+  --blume-background: oklch(0.145 0 0);
   --blume-foreground: oklch(0.95 0 0);
-  --blume-muted: oklch(0.185 0 0);
+  --blume-muted: oklch(1 0 0 / 6%);
   --blume-muted-foreground: oklch(0.68 0 0);
   --blume-border: oklch(1 0 0 / 9%);
   --blume-accent: #ff4f00;
   --blume-accent-foreground: #ffffff;
   --blume-code-background: oklch(0.16 0 0);
+  --blume-content-width: 46rem;
+  --blume-radius: 0.75rem;
+  --drop-rim: inset 0 1px 0 oklch(1 0 0 / 3%), inset 0 0 0 1px oklch(1 0 0 / 5%), 0 1px 2px -1px oklch(0 0 0 / 22%), 0 2px 3px -2px oklch(0 0 0 / 14%);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-synthesis: none;
+}
+
+[data-blume-header] a[href="/"] {
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+[data-blume-toc] {
+  font-size: 0.8125rem;
+}
+
+.blume-nav-link {
+  border-radius: 9999px;
+  color: oklch(0.68 0 0);
+  transition: color 150ms cubic-bezier(0.25, 1, 0.5, 1), background-color 150ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.blume-nav-link[aria-current="page"] {
+  background: oklch(1 0 0 / 6%);
+  color: oklch(0.95 0 0);
+  font-weight: 500;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .blume-nav-link:hover {
+    color: oklch(0.95 0 0);
+  }
+}
+
+article.prose {
+  color: oklch(0.86 0 0);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  overflow-wrap: break-word;
+}
+
+article.prose :is(h1, h2, h3, h4, h5, h6) {
+  color: oklch(0.97 0 0);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+article.prose h1 {
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  letter-spacing: -0.025em;
+}
+
+article.prose h1 + p.text-lg {
+  margin-top: 0;
+  margin-bottom: 2rem;
+  color: oklch(0.68 0 0);
+  font-size: 1rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+article.prose h2 {
+  margin: 2.25em 0 0.75em;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid oklch(1 0 0 / 8%);
+  font-size: 1.375rem;
+}
+
+article.prose h3 {
+  font-size: 1.125rem;
+}
+
+article.prose :is(h4, h5, h6) {
+  font-size: 1rem;
+}
+
+article.prose :is(p, ul, ol, blockquote, table) {
+  margin-top: 0;
+  margin-bottom: 1.25em;
+}
+
+article.prose li + li {
+  margin-top: 0.25em;
+}
+
+article.prose li::marker {
+  color: oklch(0.55 0 0);
+}
+
+article.prose a:not([class]) {
+  color: oklch(0.97 0 0);
+  font-weight: inherit;
+  text-decoration-line: underline;
+  text-decoration-thickness: from-font;
+  text-underline-offset: 3px;
+  text-decoration-color: oklch(1 0 0 / 30%);
+  transition: color 150ms cubic-bezier(0.25, 1, 0.5, 1), text-decoration-color 150ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  article.prose a:not([class]):hover {
+    color: var(--blume-accent);
+    text-decoration-color: currentcolor;
+  }
+}
+
+article.prose strong {
+  color: oklch(0.97 0 0);
+  font-weight: 600;
+}
+
+article.prose :not(pre) > code {
+  padding: 0.125em 0.375em;
+  border: 0;
+  border-radius: 0.375rem;
+  background: oklch(1 0 0 / 7%);
+  color: oklch(0.95 0 0);
+  font-size: 0.85em;
+  font-weight: 400;
+}
+
+article.prose :not(pre) > code::before,
+article.prose :not(pre) > code::after {
+  content: none;
+}
+
+article.prose pre,
+article.prose pre code {
+  font-size: 0.8125rem;
+  line-height: 1.7;
+}
+
+article.prose table {
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+article.prose :is(th, td) {
+  padding: 0.5rem 0.875rem;
+  border-color: oklch(1 0 0 / 8%);
+}
+
+article.prose th {
+  color: oklch(0.97 0 0);
+  font-weight: 600;
 }
 
 .drop-video {
   display: block;
   width: 100%;
   height: auto;
+  margin: 0 0 2rem;
   aspect-ratio: 16 / 10;
   border-radius: 0.875rem;
-  background: #0a0a0a;
-  box-shadow: inset 0 1px 0 oklch(1 0 0 / 3%), 0 0 0 1px oklch(1 0 0 / 7%), 0 24px 48px -16px oklch(0 0 0 / 60%);
+  background: oklch(0.145 0 0);
+  box-shadow: var(--drop-rim), 0 24px 48px -16px oklch(0 0 0 / 60%);
+}
+
+img.drop-video {
+  aspect-ratio: auto;
 }

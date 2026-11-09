@@ -82,7 +82,7 @@ npm run typecheck
 npm test
 ```
 
-`npm run test:node` runs the same smoke tests against the Node server (`STORAGE=s3` with the `S3_*` variables to test S3; set `CHROME_PATH` to include preview cards). `npm run build` bundles the client scripts into `public/js` and Tailwind into `public/style.css`; `dev`, `test` and `deploy` run it first. `npm test` starts `wrangler dev` with throwaway local storage and drives the Worker through the CLI and curl.
+`npm run test:e2e` runs the Playwright suite (`e2e/`) in a real browser against `wrangler dev`, desktop and phone: admin sign-in, new drops, every viewer, passwords, share pages, Scrawl, tokens with icons, settings. `npm run test:e2e:node` runs it against the Node server, `npm run check` runs every gate, and `npm run test:live` checks the deployed app and docs serve the current version. CI runs all of it on every push and pull request. `npm run test:node` runs the same smoke tests against the Node server (`STORAGE=s3` with the `S3_*` variables to test S3; set `CHROME_PATH` to include preview cards). `npm run build` bundles the client scripts into `public/js` and Tailwind into `public/style.css`; `dev`, `test` and `deploy` run it first. `npm test` starts `wrangler dev` with throwaway local storage and drives the Worker through the CLI and curl.
 
 ## Docs
 
@@ -102,7 +102,7 @@ Versions follow semver; the running version shows in the `/admin` footer. Add no
 npm run release -- minor   # or patch, major, 1.2.0; --dry-run to preview
 ```
 
-It moves the notes under the new version, bumps `package.json`, freezes the previous docs as an archived Blume version on a minor or major bump (with the version switcher, an "old version" notice and canonical links to the latest), runs the checks, commits, tags, pushes, creates the GitHub release, and deploys the app and the docs. Self-hosters upgrade with `npx jalco-drop upgrade`, or `git pull` in a clone.
+It moves the notes under the new version, bumps `package.json`, freezes the previous docs as an archived Blume version on a minor or major bump (with the version switcher, an "old version" notice and canonical links to the latest), runs the typecheck plus the smoke and end-to-end tests on Cloudflare and Node, commits, tags, pushes, creates the GitHub release, deploys the app and the docs, and checks both live sites serve the new version. Self-hosters upgrade with `npx jalco-drop upgrade`, or `git pull` in a clone.
 
 ## Credits
 

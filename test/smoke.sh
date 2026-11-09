@@ -17,7 +17,7 @@ else
   npx wrangler dev --config "$config" --test-scheduled --port "$port" --host "localhost:$port" --var "ADMIN_TOKEN:$JALCO_DROP_TOKEN" --persist-to "$work/state" >"$work/wrangler.log" 2>&1 &
 fi
 server=$!
-trap 'kill $server 2>/dev/null; wait $server 2>/dev/null; rm -rf "$work"' EXIT
+trap 'status=$?; kill $server 2>/dev/null; wait $server 2>/dev/null || true; rm -rf "$work"; exit $status' EXIT
 
 for _ in $(seq 60); do
   curl -fsS "$JALCO_DROP_URL/style.css" >/dev/null 2>&1 && break

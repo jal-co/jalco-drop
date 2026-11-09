@@ -146,7 +146,7 @@ export function SettingsForm({ settings }: { settings: SettingsState }) {
             action="/admin/settings/reset"
             trigger={<Button type="button" variant="ghost">Reset</Button>}
             title="Reset settings?"
-            description={`Goes back to the values in wrangler.jsonc: ${settings.fromDeploy.name}, ${settings.fromDeploy.owner}, ${settings.fromDeploy.accent}, ${themeLabel(settings.fromDeploy.codeTheme)}.`}
+            description={`Goes back to the deploy values: ${settings.fromDeploy.name}, ${settings.fromDeploy.owner}, ${settings.fromDeploy.accent}, ${themeLabel(settings.fromDeploy.codeTheme)}.`}
             confirm="Reset"
           />
         )}

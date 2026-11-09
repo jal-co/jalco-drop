@@ -9,3 +9,5 @@ dist/
 .env
 docker-compose.yml
 data/
+test-results/
+playwright-report/

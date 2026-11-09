@@ -132,6 +132,7 @@ const env: Env = {
   ACCENT_COLOR: setting("ACCENT_COLOR"),
   CODE_THEME: setting("CODE_THEME"),
   HOME_URL: setting("HOME_URL"),
+  RATE_LIMIT: setting("RATE_LIMIT"),
 };
 const background = { waitUntil: (promise: Promise<unknown>) => void promise.catch((error) => console.error(error)) };
 
