@@ -7,7 +7,8 @@ You are helping a person run their own jalco-drop: a file, paste and screen-reco
 - Node 22.18 or newer (`node --version`).
 - A Cloudflare account with a domain on it. The site is served from a hostname on that domain, bound as a custom domain, so the zone must be on the same account as the Worker.
 - R2 enabled on the account (Cloudflare asks for a payment method even on the free tier).
-- Browser Rendering is used for link preview cards. The Workers Free plan includes 10 browser minutes a day, about one card render per upload.
+- The Workers Paid plan ($5 a month) is likely needed. Workers Free allows 10 ms of CPU per request, and rendering a highlighted file, a markdown page or a session usually takes more, so those pages fail with Cloudflare error 1102. Tell the person before they deploy on Free.
+- Browser Rendering is used for link preview cards. Workers Paid includes 10 browser hours a month; Workers Free includes 10 browser minutes a day, about one card render per upload.
 
 If the domain is not on Cloudflare yet, stop and tell the person. Moving nameservers is their call.
 

@@ -29,7 +29,7 @@ Every drop can have a password (PBKDF2, checked on the server) and an expiry. Ex
 
 ## Setup
 
-You need Node 22.18+, a Cloudflare account with the domain you want to serve from, R2, and Browser Rendering (on the Workers Free plan, 10 browser minutes a day, about one preview card each).
+You need Node 22.18+, a Cloudflare account with the domain you want to serve from, R2, and Browser Rendering for preview cards. The Workers Paid plan ($5 a month) is likely needed: Workers Free allows 10 ms of CPU per request, and rendering a highlighted file or a markdown page usually takes more. Storage stays free up to 10 GB, and downloads are always free.
 
 ```sh
 npx jalco-drop init my-drop
