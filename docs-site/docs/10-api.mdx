@@ -27,6 +27,12 @@ Returns `201` with `{ "slug": "k3x9...", "url": "https://drop.example.com/k3x9..
 
 `DELETE /api/items/<slug>` returns `204`. Needs the **delete** permission.
 
+## Tokens
+
+`GET /api/token` returns the calling token's `name`, `sender` and `permissions`.
+
+`POST /api/tokens` creates a named token. It needs the admin token. Send a form with `name`, an optional `sender`, one `permissions` field per permission (`upload`, `list`, `delete`) and an optional `avatar` file. Returns `201` with `{ "token": "jd_…", "name", "sender", "permissions" }`; the token is shown only here.
+
 ## Read a drop
 
 `GET /<slug>?format=json` describes any drop without a token: its name, sender, expiry and `raw` URL, plus the files of a folder or the transcript and moments of a recording. A locked drop needs its password in an `X-Drop-Password` header. See [Agents](/agents) for the full shape.

@@ -1,8 +1,6 @@
 import type { Background, ObjectInfo, RateLimiter, Store } from "./platform/store";
 import { checkPassword, cookie, equalStrings, hashPassword, readCookie, sign, verify } from "./auth";
 import { describeText, highlight, highlightBlock, isCodeName } from "./highlight";
-import { parseDelimited } from "./table";
-import { renderMarkdown } from "./markdown";
 import { canExtract, listZip, openEntry, type ZipEntry } from "./zip";
 import { AVATAR_MAX_BYTES, AVATAR_TYPES, avatarKey, createToken, findToken, listTokens, PERMISSIONS, revokeToken, type Permission, type TokenRecord } from "./tokens";
 import { AdminPage } from "./pages/admin";
@@ -11,15 +9,15 @@ import { CardPage } from "./pages/card";
 import { DropPage, type Preview } from "./pages/drop";
 import { EntryPreview, type EntryPreviewData } from "./pages/entry";
 import { ErrorPage, NotFoundPage } from "./pages/message";
-import { ScrawlPage } from "./pages/scrawl";
+import { BUNDLE_FORMATS, textFormatFor, type LoadedBundle } from "./formats";
 import { SharePage } from "./pages/share";
 import type { AdminProps } from "./islands/admin/types";
-import { clock, commonRoot, formatSize } from "./view/format";
+import { commonRoot, formatSize } from "./view/format";
 import { fragment, respond } from "./view/respond";
 import { CODE_THEMES, readConfig } from "./config";
 import { loadSettings, resetSettings, saveSettings, validateSettings } from "./settings";
 import { site } from "./view/site";
-import type { Card, Drop, Scrawl } from "./view/types";
+import type { Card, Drop } from "./view/types";
 import puppeteer from "@cloudflare/puppeteer";
 import { CARD_HEIGHT, CARD_WIDTH, captureCard } from "./platform/card-browser";
 
@@ -53,11 +51,10 @@ const ADMIN_SESSION_SECONDS = 30 * 24 * 3600;
 const UNLOCK_SECONDS = 24 * 3600;
 const TEXT_PREVIEW_BYTES = 512 * 1024;
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/;
-const RESERVED_SLUGS = new Set(["admin", "api", "avatars", "fonts", "style.css", "app.js", "grain.js", "favicon.png", "favicon.svg", "robots.txt"]);
+const RESERVED_SLUGS = new Set(["admin", "api", "avatars", "fonts", "style.css", "app.js", "grain.js", "favicon.png", "favicon.svg", "robots.txt", "cli"]);
 const RANDOM_SLUG_LENGTH = 10;
 const RANDOM_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
 const TEXT_TYPE = /^(text\/|application\/(json|xml|javascript|x-sh|x-yaml|toml)|image\/svg)/;
-const MARKDOWN_NAME = /\.(md|markdown)$/i;
 const HTML_NAME = /\.html?$/i;
 const FRAME_SANDBOX = "sandbox allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox";
 const ZIP_NAME = /\.zip$/i;
@@ -73,7 +70,6 @@ const MEDIA_EXTENSIONS = new Map<string, { kind: MediaKind; type: string }>([
 ]);
 const MEDIA_TYPE_KIND = /^(image\/(png|jpe?g|gif|webp|avif)|video\/|audio\/|application\/pdf$)/;
 const SVG_NAME = /\.svg$/i;
-const TABLE_NAMES = new Map<string, "," | "\t">([["csv", ","], ["tsv", "\t"]]);
 const PDF_CSP = "default-src 'none'; frame-ancestors 'self'";
 const SVG_CSP = "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:";
 const BYTE_RANGE = /^bytes=(\d*)-(\d*)$/;
@@ -134,6 +130,19 @@ const bearerOf = (request: Request) => request.headers.get("authorization")?.mat
 async function apiToken(request: Request, env: Env, context: Background) {
   const bearer = bearerOf(request);
   return bearer && !equalStrings(bearer, env.ADMIN_TOKEN) ? findToken(env.DROPS, bearer, context) : null;
+}
+
+function readTokenForm(form: FormData) {
+  const field = (key: string) => String(form.get(key) ?? "").trim();
+  const name = field("name").slice(0, 60);
+  const permissions = PERMISSIONS.filter((permission) => form.getAll("permissions").includes(permission));
+  const avatar = form.get("avatar");
+  const file = avatar instanceof File && avatar.size > 0 ? avatar : null;
+  if (!name) return { error: "Give the token a name." };
+  if (!permissions.length) return { error: "Pick at least one permission." };
+  if (file && !AVATAR_TYPES.has(file.type)) return { error: "Avatars can be PNG, JPEG, WebP, GIF or SVG." };
+  if (file && file.size > AVATAR_MAX_BYTES) return { error: "Avatars can be up to 256 KB." };
+  return { input: { name, sender: field("sender").slice(0, 60) || name, permissions, avatar: file } };
 }
 
 const allows = (token: TokenRecord | null, permission: Permission) => Boolean(token?.permissions.includes(permission));
@@ -321,16 +330,9 @@ async function serveRaw(env: Env, object: ObjectInfo, request: Request, download
 
 async function textPreview(drop: Drop, text: string, source: boolean): Promise<Preview> {
   const { lines } = describeText(drop.name, text);
-  const markdown = MARKDOWN_NAME.test(drop.name);
-  const delimiter = TABLE_NAMES.get(extensionOf(drop.name));
-  const renderable = markdown || delimiter !== undefined || HTML_NAME.test(drop.name) || SVG_NAME.test(drop.name);
-  if (renderable && !source) {
-    if (markdown) return { kind: "markdown", html: await renderMarkdown(text), lines };
-    if (delimiter) return { kind: "table", table: parseDelimited(text, delimiter), lines };
-    if (SVG_NAME.test(drop.name)) return { kind: "svg", lines };
-    return { kind: "frame", lines };
-  }
-  return { kind: "code", html: (await highlight(drop.name, text)).html, lines, renderable };
+  const format = textFormatFor(drop.name);
+  if (format && !source) return { kind: "rendered", lines, ...(await format.render(text, { name: drop.name, renderHref: `/${drop.slug}/${encodeURIComponent(drop.name)}?render=1`, surface: "page" })) };
+  return { kind: "code", html: (await highlight(drop.name, text)).html, lines, renderable: Boolean(format) };
 }
 
 async function serveDrop(env: Env, object: ObjectInfo, origin: string, source: boolean) {
@@ -366,18 +368,19 @@ async function findEntry(env: Env, object: ObjectInfo, path: string | null) {
   return entry;
 }
 
-async function readScrawl(env: Env, object: ObjectInfo, entries: ZipEntry[]): Promise<{ root: string; scrawl: Scrawl } | null> {
-  const manifest = entries.find((entry) => /^[^/]+\/scrawl\.json$/.test(entry.path) && canExtract(entry) && entry.size <= TEXT_PREVIEW_BYTES);
-  if (!manifest) return null;
-  const root = manifest.path.slice(0, -"scrawl.json".length);
-  try {
-    const data = JSON.parse(await new Response(await openEntry(env.DROPS, object.key, manifest)).text());
-    const video = entries.find((entry) => entry.path === `${root}${data.video}`);
-    if (!video || !Array.isArray(data.keyframes)) return null;
-    return { root, scrawl: data };
-  } catch {
-    return null;
+async function loadBundle(env: Env, object: ObjectInfo, entries: ZipEntry[]): Promise<{ bundle: LoadedBundle; root: string } | null> {
+  for (const format of BUNDLE_FORMATS) {
+    const manifest = entries.find((entry) => entry.path.split("/").length === 2 && entry.path.endsWith(`/${format.manifest}`) && canExtract(entry) && entry.size <= TEXT_PREVIEW_BYTES);
+    if (!manifest) continue;
+    const root = manifest.path.slice(0, -format.manifest.length);
+    try {
+      const bundle = format.load(JSON.parse(await new Response(await openEntry(env.DROPS, object.key, manifest)).text()), entries, root);
+      if (bundle) return { bundle, root };
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+    }
   }
+  return null;
 }
 
 type Summary = { title: string; details: string[] };
@@ -388,11 +391,8 @@ async function summarize(env: Env, object: ObjectInfo): Promise<Summary> {
   if (isZip(drop)) {
     const entries = await listZip(env.DROPS, object.key, object.size);
     if (entries) {
-      const capture = await readScrawl(env, object, entries);
-      if (capture) {
-        const { scrawl } = capture;
-        return { title: scrawl.target?.windowTitle || scrawl.target?.app || "Screen recording", details: ["Screen recording", ...(scrawl.durationMs ? [clock(scrawl.durationMs)] : [])] };
-      }
+      const loaded = await loadBundle(env, object, entries);
+      if (loaded) return loaded.bundle.summary;
       const root = commonRoot(entries.map((entry) => entry.path));
       return { title: root ? root.slice(0, -1) : drop.name, details: [`${entries.length} ${entries.length === 1 ? "file" : "files"}`, size] };
     }
@@ -471,19 +471,8 @@ async function serveManifest(env: Env, object: ObjectInfo, origin: string) {
   const entries = isZip(drop) ? await listZip(env.DROPS, object.key, object.size) : null;
   if (!entries) return Response.json(manifest);
   const entryUrl = (path: string) => `${raw}?entry=${encodeURIComponent(path)}`;
-  const capture = await readScrawl(env, object, entries);
-  if (capture) {
-    const { scrawl, root } = capture;
-    return Response.json({
-      ...manifest,
-      kind: "recording",
-      video: entryUrl(`${root}${scrawl.video}`),
-      durationMs: scrawl.durationMs ?? null,
-      transcript: scrawl.transcript?.text ?? "",
-      contactSheet: scrawl.contactSheet ? entryUrl(`${root}${scrawl.contactSheet}`) : null,
-      moments: scrawl.keyframes.map((moment) => ({ at: Math.max(0, (moment.t ?? 0) - (scrawl.videoOffsetMs ?? 0)), said: moment.said ?? "", frame: moment.file ? entryUrl(`${root}${moment.file}`) : null })),
-    });
-  }
+  const loaded = await loadBundle(env, object, entries);
+  if (loaded) return Response.json({ ...manifest, ...loaded.bundle.json((path) => entryUrl(`${loaded.root}${path}`)) });
   return Response.json({ ...manifest, kind: "folder", files: entries.filter((entry) => !entry.path.endsWith("/")).map((entry) => ({ path: entry.path, size: entry.size, raw: entryUrl(entry.path) })) });
 }
 
@@ -491,11 +480,12 @@ async function serveShare(env: Env, object: ObjectInfo, origin: string) {
   const drop = toDrop(object);
   const [entries, card] = await Promise.all([listZip(env.DROPS, object.key, object.size), cardFor(env, object, origin)]);
   if (!entries) return respond(<DropPage drop={drop} preview={{ kind: "file" }} origin={origin} card={card} />);
-  const capture = await readScrawl(env, object, entries);
-  if (capture) {
-    const { scrawl, root } = capture;
-    card.video = { url: `${rawUrl(origin, drop)}?entry=${encodeURIComponent(`${root}${scrawl.video}`)}`, type: mediaOf(scrawl.video)?.type ?? "video/mp4" };
-    return respond(<ScrawlPage drop={drop} sender={senderOf(drop)} scrawl={scrawl} root={root} card={card} />);
+  const loaded = await loadBundle(env, object, entries);
+  if (loaded) {
+    const { bundle, root } = loaded;
+    const entryHref = (path: string) => `/${drop.slug}/${encodeURIComponent(drop.name)}?entry=${encodeURIComponent(`${root}${path}`)}`;
+    if (bundle.video) card.video = { url: `${origin}${entryHref(bundle.video.path)}`, type: bundle.video.type };
+    return respond(<bundle.Page drop={drop} sender={senderOf(drop)} card={card} entryHref={entryHref} />);
   }
   return respond(<SharePage drop={drop} sender={senderOf(drop)} entries={entries} seed={await seedFor(object)} card={card} />);
 }
@@ -506,14 +496,12 @@ async function entryPreview(env: Env, object: ObjectInfo, entry: ZipEntry): Prom
   if (!canExtract(entry)) return { kind: "note", text: "This file is encrypted or uses a compression method the preview cannot read. Download the zip to open it." };
   const media = mediaOf(entry.path);
   if (media) return { kind: media.kind, url: rawHref };
-  if (HTML_NAME.test(entry.path)) return { kind: "frame", url: `${rawHref}&render=1` };
-  if (SVG_NAME.test(entry.path)) return { kind: "image", url: `${rawHref}&render=1` };
-  if (!isTextName(entry.path) && extension) return { kind: "note", text: "No preview for this file." };
+  const format = textFormatFor(entry.path);
+  if (!format && !isTextName(entry.path) && extension) return { kind: "note", text: "No preview for this file." };
   if (entry.size > TEXT_PREVIEW_BYTES) return { kind: "note", text: "This file is too large to preview." };
   const text = await new Response(await openEntry(env.DROPS, object.key, entry)).text();
-  const delimiter = TABLE_NAMES.get(extension);
-  if (delimiter) return { kind: "table", table: parseDelimited(text, delimiter) };
-  return MARKDOWN_NAME.test(entry.path) ? { kind: "markdown", html: await renderMarkdown(text) } : { kind: "code", html: (await highlight(entry.path, text)).html };
+  if (format) return { kind: "rendered", body: (await format.render(text, { name: entry.path.split("/").pop() ?? entry.path, renderHref: `${rawHref}&render=1`, surface: "drawer" })).body };
+  return { kind: "code", html: (await highlight(entry.path, text)).html };
 }
 
 async function serveEntryPreview(env: Env, object: ObjectInfo, entry: ZipEntry) {
@@ -604,19 +592,18 @@ async function route(request: Request, env: Env, context: Background) {
 
   if (pathname === "/admin/tokens" && method === "POST") {
     if (!(await admin())) throw new HttpError(401, "Sign in first.");
-    const form = await request.formData();
-    const field = (key: string) => String(form.get(key) ?? "").trim();
-    const name = field("name").slice(0, 60);
-    const permissions = PERMISSIONS.filter((permission) => form.getAll("permissions").includes(permission));
-    const avatar = form.get("avatar");
-    const file = avatar instanceof File && avatar.size > 0 ? avatar : null;
-    const fail = (message: string) => adminPage(env, url, { tab: "tokens", error: message }, 400);
-    if (!name) return fail("Give the token a name.");
-    if (!permissions.length) return fail("Pick at least one permission.");
-    if (file && !AVATAR_TYPES.has(file.type)) return fail("Avatars can be PNG, JPEG, WebP, GIF or SVG.");
-    if (file && file.size > AVATAR_MAX_BYTES) return fail("Avatars can be up to 256 KB.");
-    const { token, record } = await createToken(env.DROPS, { name, sender: field("sender").slice(0, 60) || name, permissions, avatar: file });
+    const form = readTokenForm(await request.formData());
+    if (form.error !== undefined) return adminPage(env, url, { tab: "tokens", error: form.error }, 400);
+    const { token, record } = await createToken(env.DROPS, form.input);
     return adminPage(env, url, { tab: "tokens", newToken: { token, name: record.name } });
+  }
+
+  if (pathname === "/api/tokens" && method === "POST") {
+    if (!bearerOf(request) || !(await admin())) throw new HttpError(401, "Creating tokens needs the admin token.");
+    const form = readTokenForm(await request.formData());
+    if (form.error !== undefined) throw new HttpError(400, form.error);
+    const { token, record } = await createToken(env.DROPS, form.input);
+    return Response.json({ token, name: record.name, sender: record.sender, permissions: record.permissions }, { status: 201 });
   }
 
   const revokeMatch = /^\/admin\/tokens\/([0-9a-f]{64})\/revoke$/.exec(pathname);
@@ -679,6 +666,13 @@ async function route(request: Request, env: Env, context: Background) {
     if (!allows(await apiToken(request, env, context), "delete") && !(await admin())) throw new HttpError(401, "Missing or wrong token.");
     await removeDrop(env, decodeURIComponent(apiItem[1]));
     return new Response(null, { status: 204 });
+  }
+
+  if (pathname === "/api/token" && method === "GET") {
+    if (bearerOf(request) && (await isAdmin(request, env))) return Response.json({ name: "admin", sender: site.owner, permissions: PERMISSIONS });
+    const token = await apiToken(request, env, context);
+    if (!token) throw new HttpError(401, "Missing or wrong token.");
+    return Response.json({ name: token.name, sender: token.sender, permissions: token.permissions });
   }
 
   if (pathname === "/api/items" && method === "GET") {

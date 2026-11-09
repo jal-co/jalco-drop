@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import type { Table } from "@/table";
-import { DataTable } from "@/view/data-table";
+import type { ReactNode } from "react";
 import { FileActions, type FileAction } from "@/islands/file-actions";
 import { Document } from "@/view/document";
 import { FileIcon } from "@/view/file-icon";
@@ -12,28 +11,20 @@ import { UploaderBadge } from "@/view/uploader-badge";
 
 export type Preview =
   | { kind: "code"; html: string; lines: number; renderable: boolean }
-  | { kind: "markdown"; html: string; lines: number }
-  | { kind: "frame"; lines: number }
-  | { kind: "table"; table: Table; lines: number }
-  | { kind: "svg"; lines: number }
+  | { kind: "rendered"; body: ReactNode; mono?: boolean; lines: number }
   | { kind: "image" }
   | { kind: "video" }
   | { kind: "audio" }
   | { kind: "pdf" }
   | { kind: "file" };
 
-const FRAME_SANDBOX = "allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox";
-
 function PreviewBody({ drop, preview, rawHref }: { drop: Drop; preview: Preview; rawHref: string }) {
   if (preview.kind === "code") return <div className="viewer-code" dangerouslySetInnerHTML={{ __html: preview.html }} />;
-  if (preview.kind === "markdown") return <article className="prose" dangerouslySetInnerHTML={{ __html: preview.html }} />;
-  if (preview.kind === "frame") return <iframe className="frame" src={`${rawHref}?render=1`} title={drop.name} sandbox={FRAME_SANDBOX} />;
+  if (preview.kind === "rendered") return preview.body;
   if (preview.kind === "image") return <div className="stage"><img src={rawHref} alt={drop.name} /></div>;
   if (preview.kind === "video") return <div className="stage"><video className="stage-video" src={rawHref} controls playsInline preload="metadata" /></div>;
   if (preview.kind === "audio") return <AudioStage drop={drop} rawHref={rawHref} />;
   if (preview.kind === "pdf") return <iframe className="frame frame-pdf" src={rawHref} title={drop.name} />;
-  if (preview.kind === "svg") return <div className="stage stage-checker"><img src={`${rawHref}?render=1`} alt={drop.name} /></div>;
-  if (preview.kind === "table") return <div className="viewer-table"><DataTable table={preview.table} /></div>;
   return <div className="stage"><span className="font-mono text-xs text-muted-foreground">{drop.type || "file"}</span></div>;
 }
 
@@ -52,7 +43,7 @@ function AudioStage({ drop, rawHref }: { drop: Drop; rawHref: string }) {
 function actionsFor(drop: Drop, preview: Preview, origin: string): FileAction[] {
   const rawHref = `/${drop.slug}/${encodeURIComponent(drop.name)}`;
   const actions: FileAction[] = [];
-  if (preview.kind === "markdown" || preview.kind === "frame" || preview.kind === "table" || preview.kind === "svg") actions.push({ label: "Source", icon: "code", href: `/${drop.slug}?view=source` });
+  if (preview.kind === "rendered") actions.push({ label: "Source", icon: "code", href: `/${drop.slug}?view=source` });
   if (preview.kind === "code" && preview.renderable) actions.push({ label: "Rendered", icon: "eye", href: `/${drop.slug}` });
   if ("lines" in preview) actions.push({ label: "Copy", icon: "copy", copyUrl: rawHref });
   actions.push({ label: "Download", icon: "download", href: `${rawHref}?download=1` });
@@ -76,7 +67,7 @@ function StatusBar({ drop, preview }: { drop: Drop; preview: Preview }) {
 export function DropPage({ drop, preview, origin, card }: { drop: Drop; preview: Preview; origin: string; card: Card }) {
   const rawHref = `/${drop.slug}/${encodeURIComponent(drop.name)}`;
   return (
-    <Document title={drop.name} card={card} islands code={preview.kind === "code" || preview.kind === "table"} bodyClassName="viewer-page">
+    <Document title={drop.name} card={card} islands code={preview.kind === "code" || (preview.kind === "rendered" && preview.mono)} bodyClassName="viewer-page">
       <header className="fixed top-[max(0.75rem,env(safe-area-inset-top))] left-[max(0.75rem,env(safe-area-inset-left))] z-30 flex h-11 max-w-[calc(100vw-5rem)] items-center gap-2.5 rounded-full bg-popover px-4 shadow-overlay">
         <span className="hidden shrink-0 text-[0.8125rem] text-muted-foreground sm:inline">{site.name}</span>
         <span className="hidden h-3.5 w-px shrink-0 bg-border sm:block" aria-hidden="true" />

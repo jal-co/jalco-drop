@@ -45,7 +45,7 @@ Settings start from `vars` in `wrangler.local.jsonc`: `SITE_NAME`, `OWNER_NAME`,
 npx skills add jal-co/jalco-drop
 ```
 
-The skill teaches an agent to send with the right password and expiry, refuse secrets, and read links it's given. Any drop link answers `?format=json` with its files and raw URLs, or a recording's transcript and marked moments, and a locked drop takes its password in an `X-Drop-Password` header. `jalco-drop -j` prints an upload as JSON.
+This installs two skills: `jalco-drop` sends and reads drops (scanning for secrets first, adding a password and expiry where it should), and `jalco-drop-setup` deploys a site, signs the CLI in with `jalco-drop login`, and mints a scoped token through `POST /api/tokens`. Any drop link answers `?format=json` with its files and raw URLs, or a recording's transcript and marked moments, and a locked drop takes its password in an `X-Drop-Password` header. `jalco-drop -j` prints an upload as JSON.
 
 ## Tokens
 

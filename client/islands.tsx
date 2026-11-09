@@ -24,6 +24,10 @@ const ISLANDS: Record<IslandName, (props: string) => Promise<ReactElement>> = {
     const { ScrawlPlayer } = await import("@/islands/scrawl-player");
     return <ScrawlPlayer {...parse<ComponentProps<typeof ScrawlPlayer>>(props)} />;
   },
+  transcript: async (props) => {
+    const { TranscriptPlayer } = await import("@/islands/transcript-player");
+    return <TranscriptPlayer {...parse<ComponentProps<typeof TranscriptPlayer>>(props)} />;
+  },
   uploader: async (props) => {
     const { UploaderBadge } = await import("@/view/uploader-badge");
     return <UploaderBadge {...parse<ComponentProps<typeof UploaderBadge>>(props)} />;

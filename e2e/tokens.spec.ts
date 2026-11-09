@@ -4,7 +4,7 @@ import { cli, fixture, hydrated, open, signIn, unique, upload } from "./helpers"
 test("named tokens upload under their own name and icon, then revoke", async ({ page, request, baseURL }) => {
   const name = unique("Bot");
   await signIn(page);
-  await page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: /Tokens/ }).click();
+  await open(page, "/admin?tab=tokens");
   await page.getByRole("button", { name: "New token" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Name").fill(name);
@@ -32,7 +32,7 @@ test("named tokens upload under their own name and icon, then revoke", async ({ 
   await badge.hover();
   await expect(page.locator("[data-slot=tooltip-content]")).toHaveText(`Uploaded by ${name}`);
 
-  await page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: /Tokens/ }).click();
+  await open(page, "/admin?tab=tokens");
   await page.getByRole("listitem").filter({ hasText: name }).getByRole("button", { name: "Revoke" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Revoke" }).click();
   await expect(page.getByRole("listitem").filter({ hasText: name })).toHaveCount(0);

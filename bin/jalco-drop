@@ -14,10 +14,13 @@ usage() {
 Usage: jalco-drop [options] <file | directory | ->
        jalco-drop init [directory]
        jalco-drop upgrade [version]
+       jalco-drop login [url]
+       jalco-drop whoami
 
 Uploads a file, a directory (zipped), a Scrawl capture, or stdin to your drop site and prints the link.
 "init" sets up a new drop site on your Cloudflare account.
 A .scrawl capture uploads only its video, frames, contact sheet and transcript, and expires after 30d unless -e is set.
+A Superwhisper recording folder uploads its audio and transcript, without the prompt or app context.
 
 Options:
   -p PASSWORD   require a password to open the drop
@@ -28,14 +31,38 @@ Options:
   -l            list drops
   -d SLUG       delete a drop
 
-Environment:
-  JALCO_DROP_URL    your drop site, e.g. https://drop.example.com (required)
-  JALCO_DROP_TOKEN  admin token or a named upload token (required)
+"login" saves a site and token to ~/.config/jalco-drop/config (readable only by you).
+"whoami" prints the site, the token's name and what it may do.
+
+Environment (overrides the saved login):
+  JALCO_DROP_URL    your drop site, e.g. https://drop.example.com
+  JALCO_DROP_TOKEN  admin token or a named upload token
 USAGE
 }
 
-base="${JALCO_DROP_URL:?Set JALCO_DROP_URL to your drop site, e.g. https://drop.example.com}"
-token="${JALCO_DROP_TOKEN:?Set JALCO_DROP_TOKEN to your admin token}"
+config="${XDG_CONFIG_HOME:-$HOME/.config}/jalco-drop/config"
+saved() { if [[ -f "$config" ]]; then sed -n "s/^$1=//p" "$config" | head -1; fi; }
+
+if [[ "${1:-}" == "login" ]]; then
+  login_url="${2:-${JALCO_DROP_URL:-}}"
+  [[ -n "$login_url" ]] || { read -rp "Drop site URL: " login_url; }
+  login_url="${login_url%/}"
+  if [[ -t 0 ]]; then read -rsp "Token: " login_token; echo >&2; else read -r login_token; fi
+  whoami="$(curl -sf -H "Authorization: Bearer $login_token" "$login_url/api/token")" || { echo "That site rejected the token." >&2; exit 1; }
+  mkdir -p "$(dirname "$config")"
+  (umask 077 && printf 'url=%s\ntoken=%s\n' "$login_url" "$login_token" > "$config")
+  echo "Signed in to $login_url as $(jq -r '"\(.name) (\(.permissions | join(", ")))"' <<<"$whoami")"
+  exit
+fi
+
+base="${JALCO_DROP_URL:-$(saved url)}"
+token="${JALCO_DROP_TOKEN:-$(saved token)}"
+[[ -n "$base" && -n "$token" ]] || { echo "Not signed in. Run: jalco-drop login https://drop.example.com" >&2; exit 1; }
+
+if [[ "${1:-}" == "whoami" ]]; then
+  curl -sf -H "Authorization: Bearer $token" "$base/api/token" | jq -c --arg url "$base" '{url: $url} + .' || { echo "$base rejected the token." >&2; exit 1; }
+  exit
+fi
 password="" slug="" expires="" name="" json=""
 
 while getopts ":p:s:e:n:jld:h" opt; do
@@ -80,6 +107,22 @@ elif [[ -d "$target" && -f "$target/scrawl.json" ]]; then
   file="$tmp/$capture.zip"
   name="${name:-$capture.zip}"
   expires="${expires:-30d}"
+elif [[ -d "$target" && -f "$target/meta.json" ]] && jq -e '.segments and .duration' "$target/meta.json" >/dev/null 2>&1; then
+  tmp="$(mktemp -d)"
+  note="superwhisper-$(jq -r '(.datetime // "note") | gsub("[^0-9A-Za-z]"; "")' "$target/meta.json")"
+  mkdir -p "$tmp/$note"
+  source_audio="$(ls "$target"/output.* 2>/dev/null | head -1)"
+  [[ -n "$source_audio" ]] || { echo "No output audio in $target" >&2; exit 1; }
+  audio="audio.${source_audio##*.}"
+  if command -v ffmpeg >/dev/null && ffmpeg -loglevel error -i "$source_audio" -c:a aac -b:a 96k -movflags +faststart "$tmp/$note/audio.m4a"; then
+    audio="audio.m4a"
+  else
+    cp "$source_audio" "$tmp/$note/$audio"
+  fi
+  jq --arg audio "$audio" '{audio: $audio, durationMs: .duration, recordedAt: .datetime, kind, text: .result, speakers: [(.speakers // [])[] | if type == "object" then (.name // .label // .id | tostring) else tostring end], segments: [.segments[] | {start, end, text, speaker}]}' "$target/meta.json" > "$tmp/$note/superwhisper.json"
+  (cd "$tmp" && zip -0qr "$note.zip" "$note")
+  file="$tmp/$note.zip"
+  name="${name:-$note.zip}"
 elif [[ -d "$target" ]]; then
   tmp="$(mktemp -d)"
   dir="$(cd "$target" && pwd)"

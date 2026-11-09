@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { cn } from "cn";
 import { DownloadButton } from "@/view/download-button";
 import { clock } from "@/view/format";
-import type { Scrawl } from "@/view/types";
+import type { Scrawl } from "@/formats/scrawl/schema";
 
 type Moment = Scrawl["keyframes"][number] & { frameUrl?: string };
 

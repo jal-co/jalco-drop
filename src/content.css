@@ -13,6 +13,7 @@
 }
 
 .menu.radial:not(:popover-open) {
+  display: none;
   opacity: 0;
   transition-duration: 100ms;
 }

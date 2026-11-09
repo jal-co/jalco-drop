@@ -40,7 +40,7 @@
     "node": ">=22.18"
   },
   "scripts": {
-    "build": "esbuild client/grain.js --bundle --minify --format=esm --outfile=public/grain.js && esbuild client/forms.js --minify --outfile=public/js/forms.js && esbuild client/islands.tsx --bundle --minify --format=esm --splitting --outdir=public/js --define:process.env.NODE_ENV='\"production\"' --jsx=automatic && tailwindcss -i src/styles.css -o public/style.css --minify",
+    "build": "esbuild client/grain.js --bundle --minify --format=esm --outfile=public/grain.js && esbuild client/forms.js --minify --outfile=public/js/forms.js && esbuild client/islands.tsx --bundle --minify --format=esm --splitting --outdir=public/js --define:process.env.NODE_ENV='\"production\"' --jsx=automatic && tailwindcss -i src/styles.css -o public/style.css --minify && cp bin/jalco-drop public/cli",
     "predev": "npm run build",
     "dev": "wrangler dev -c $(test -f wrangler.local.jsonc && echo wrangler.local.jsonc || echo wrangler.jsonc) --host localhost:8787",
     "predeploy": "npm run build",

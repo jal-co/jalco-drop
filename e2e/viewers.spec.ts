@@ -81,3 +81,13 @@ test("drops describe themselves as JSON for agents", async ({ request }) => {
   expect(manifest).toMatchObject({ slug, name: "agent.txt", raw: expect.stringContaining(`/${slug}/agent.txt`) });
   expect(await (await request.get(manifest.raw, { headers: { "x-drop-password": "pw" } })).text()).toBe("for agents\n");
 });
+
+test("agents can mint a scoped token and check what it may do", async ({ request }) => {
+  const created = await request.post("/api/tokens", { headers: { authorization: "Bearer e2e-token" }, multipart: { name: "Agent", sender: "Claude", permissions: "upload" } });
+  expect(created.status()).toBe(201);
+  const { token } = await created.json();
+  const whoami = await (await request.get("/api/token", { headers: { authorization: `Bearer ${token}` } })).json();
+  expect(whoami).toEqual({ name: "Agent", sender: "Claude", permissions: ["upload"] });
+  expect((await request.post("/api/tokens", { headers: { authorization: `Bearer ${token}` }, multipart: { name: "x", permissions: "upload" } })).status()).toBe(401);
+  expect((await request.get("/cli")).status()).toBe(200);
+});
