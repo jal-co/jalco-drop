@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${1:-}" == "init" ]]; then
+  exec node "$(dirname "$(realpath "$0")")/../scripts/setup.mjs" "$@"
+fi
+
+usage() {
+  cat <<'USAGE'
+Usage: jalco-drop [options] <file | directory | ->
+       jalco-drop init [directory]
+
+Uploads a file, a directory (zipped), a Scrawl capture, or stdin to your drop site and prints the link.
+"init" sets up a new drop site on your Cloudflare account.
+A .scrawl capture uploads only its video, frames, contact sheet and transcript, and expires after 30d unless -e is set.
+
+Options:
+  -p PASSWORD   require a password to open the drop
+  -s SLUG       choose the link path instead of a random one
+  -e EXPIRY     expire after e.g. 12h or 7d
+  -n NAME       display name (defaults to the file name)
+  -l            list drops
+  -d SLUG       delete a drop
+
+Environment:
+  JALCO_DROP_URL    your drop site, e.g. https://drop.example.com (required)
+  JALCO_DROP_TOKEN  admin token or a named upload token (required)
+USAGE
+}
+
+base="${JALCO_DROP_URL:?Set JALCO_DROP_URL to your drop site, e.g. https://drop.example.com}"
+token="${JALCO_DROP_TOKEN:?Set JALCO_DROP_TOKEN to your admin token}"
+password="" slug="" expires="" name=""
+
+while getopts ":p:s:e:n:ld:h" opt; do
+  case "$opt" in
+    p) password="$OPTARG" ;;
+    s) slug="$OPTARG" ;;
+    e) expires="$OPTARG" ;;
+    n) name="$OPTARG" ;;
+    l) curl -fsS -H "Authorization: Bearer $token" "$base/api/items"; echo; exit ;;
+    d) curl -fsS -X DELETE -H "Authorization: Bearer $token" "$base/api/items/$OPTARG"; echo "Deleted $OPTARG"; exit ;;
+    h) usage; exit ;;
+    *) usage >&2; exit 2 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+target="${1:--}"
+tmp=""
+trap '[[ -n "$tmp" ]] && rm -rf "$tmp"' EXIT
+
+if [[ "$target" == "-" ]]; then
+  tmp="$(mktemp -d)"
+  cat > "$tmp/paste.txt"
+  file="$tmp/paste.txt"
+  name="${name:-paste.txt}"
+elif [[ -d "$target" && -f "$target/scrawl.json" ]]; then
+  tmp="$(mktemp -d)"
+  capture="$(basename "$(cd "$target" && pwd)" .scrawl)"
+  mkdir -p "$tmp/$capture/frames"
+  cp "$target/contact-sheet.png" "$tmp/$capture/"
+  if [[ -f "$target/audio.wav" ]] && command -v ffmpeg >/dev/null; then
+    offset="$(jq -r '(.videoOffsetMs // 0) / 1000' "$target/scrawl.json")"
+    ffmpeg -loglevel error -i "$target/recording.mp4" -ss "$offset" -i "$target/audio.wav" -map 0:v -map 1:a -c:v copy -c:a aac -b:a 128k -shortest -movflags +faststart "$tmp/$capture/recording.mp4"
+  else
+    [[ -f "$target/audio.wav" ]] && echo "ffmpeg not found; uploading the capture without its audio" >&2
+    cp "$target/recording.mp4" "$tmp/$capture/"
+  fi
+  cp "$target"/frames/*.png "$tmp/$capture/frames/"
+  jq '{version, id, durationMs, videoOffsetMs, video, contactSheet, target: {app: .target.app, windowTitle: .target.windowTitle}, transcript: {text: .transcript.text, segments: .transcript.segments}, keyframes}' "$target/scrawl.json" > "$tmp/$capture/scrawl.json"
+  (cd "$tmp" && zip -0qr "$capture.zip" "$capture")
+  file="$tmp/$capture.zip"
+  name="${name:-$capture.zip}"
+  expires="${expires:-30d}"
+elif [[ -d "$target" ]]; then
+  tmp="$(mktemp -d)"
+  dir="$(cd "$target" && pwd)"
+  (cd "$(dirname "$dir")" && zip -qr "$tmp/$(basename "$dir").zip" "$(basename "$dir")" -x '*/.DS_Store' '*/node_modules/*' '*/.git/*')
+  file="$tmp/$(basename "$dir").zip"
+  name="${name:-$(basename "$dir").zip}"
+else
+  file="$target"
+  name="${name:-$(basename "$file")}"
+fi
+
+query="name=$(jq -rn --arg v "$name" '$v|@uri')"
+[[ -n "$slug" ]] && query+="&slug=$(jq -rn --arg v "$slug" '$v|@uri')"
+[[ -n "$expires" ]] && query+="&expires=$expires"
+
+headers=(-H "Authorization: Bearer $token" -H "Content-Type: $(file --mime-type -b "$file")")
+[[ -n "$password" ]] && headers+=(-H "X-Drop-Password: $password")
+
+response="$(curl -sS -w '\n%{http_code}' -X POST "${headers[@]}" -T "$file" "$base/api/items?$query")"
+status="${response##*$'\n'}"
+body="${response%$'\n'*}"
+if [[ "$status" != 201 ]]; then
+  echo "Upload failed ($status): $(jq -r '.error // .' <<<"$body" 2>/dev/null || echo "$body")" >&2
+  exit 1
+fi
+url="$(jq -r .url <<<"$body")"
+echo "$url"
+if [[ -t 1 ]] && command -v pbcopy >/dev/null; then
+  printf '%s' "$url" | pbcopy
+  echo "Copied to clipboard" >&2
+fi

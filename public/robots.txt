@@ -1,0 +1,12 @@
+User-agent: Slackbot
+User-agent: Slackbot-LinkExpanding
+User-agent: Twitterbot
+User-agent: facebookexternalhit
+User-agent: Discordbot
+User-agent: LinkedInBot
+User-agent: TelegramBot
+User-agent: WhatsApp
+Allow: /
+
+User-agent: *
+Disallow: /

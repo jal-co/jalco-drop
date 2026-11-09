@@ -1,0 +1,138 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "./content.css";
+
+@source "../client";
+@source "./";
+
+@custom-variant dark (&:is(.dark *));
+
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/GeistMono-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@theme inline {
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-marker: var(--marker);
+  --color-field: var(--field);
+  --color-fill: var(--fill);
+  --color-fill-hover: var(--fill-hover);
+  --color-rim: var(--surface-rim);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+:root {
+  color-scheme: dark;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.185 0 0);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.2 0 0);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.95 0 0);
+  --primary-foreground: oklch(0.16 0 0);
+  --secondary: oklch(1 0 0 / 6%);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(1 0 0 / 6%);
+  --muted-foreground: oklch(0.68 0 0);
+  --accent: oklch(1 0 0 / 7%);
+  --accent-foreground: oklch(0.97 0 0);
+  --destructive: oklch(0.68 0.19 25);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 5%);
+  --ring: oklch(1 0 0 / 40%);
+  --radius: 0.75rem;
+  --marker: oklch(0.677 0.2273 38.4);
+  --field: oklch(0.165 0 0);
+  --fill: oklch(1 0 0 / 6%);
+  --fill-hover: oklch(1 0 0 / 9%);
+  --surface-rim: oklch(1 0 0 / 5%);
+  --elevation-lip: inset 0 1px 0 oklch(1 0 0 / 3%);
+  --elevation-raised: 0 1px 2px -1px oklch(0 0 0 / 22%), 0 2px 3px -2px oklch(0 0 0 / 14%);
+  --elevation-overlay: 0 2px 2px oklch(0 0 0 / 10%), 0 4px 4px oklch(0 0 0 / 10%), 0 8px 8px oklch(0 0 0 / 10%), 0 24px 48px -12px oklch(0 0 0 / 40%);
+  --shadow-raised: var(--elevation-lip), inset 0 0 0 1px var(--surface-rim), var(--elevation-raised);
+  --shadow-overlay: var(--elevation-lip), inset 0 0 0 1px var(--surface-rim), var(--elevation-overlay);
+  --viewer-bg: #0a0a0a;
+  --menu-bg: var(--popover);
+  --menu-fg: var(--popover-foreground);
+  --dur-feedback: 150ms;
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@utility shadow-raised {
+  box-shadow: var(--shadow-raised);
+}
+
+@utility shadow-overlay {
+  box-shadow: var(--shadow-overlay);
+}
+
+@utility shadow-rim {
+  box-shadow: var(--elevation-lip), inset 0 0 0 1px var(--surface-rim);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply bg-background font-sans text-foreground antialiased;
+    -webkit-text-size-adjust: 100%;
+    font-synthesis: none;
+  }
+  body {
+    @apply min-h-dvh bg-background;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--marker) 28%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  ::backdrop {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
