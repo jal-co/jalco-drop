@@ -33,6 +33,8 @@
     "src/platform/fs-store.ts",
     "src/platform/s3-store.ts",
     "src/platform/node-*.ts",
-    "src/neon-function.ts"
+    "src/neon-function.ts",
+    "src/neon-entry.ts",
+    "src/neon-package.ts"
   ]
 }

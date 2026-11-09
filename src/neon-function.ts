@@ -1,9 +1,6 @@
-import { fileURLToPath } from "node:url";
 import { handleRequest, runScheduled, type Env } from "./app";
-import { background, createRateLimiter, required, serveStaticFile, setting } from "./platform/node-runtime";
+import { background, createRateLimiter, required, setting } from "./platform/node-runtime";
 import { S3Store } from "./platform/s3-store";
-
-const publicDir = fileURLToPath(new URL("./public", import.meta.url));
 
 const env: Env = {
   DROPS: new S3Store({
@@ -29,14 +26,14 @@ function withClientIp(request: Request) {
   return new Request(request, { headers });
 }
 
-export default {
-  async fetch(request: Request) {
+export function createDropFunction(serveStatic: (request: Request) => Promise<Response | undefined>) {
+  return async function fetch(request: Request) {
     const { pathname } = new URL(request.url);
     if (pathname === "/__scheduled" && request.method === "POST") {
       if (!request.headers.has("x-neon-trigger-invocation-id")) return new Response("Not a trigger call.", { status: 401 });
       await runScheduled(env);
       return new Response("ran");
     }
-    return (await serveStaticFile(publicDir, request)) ?? handleRequest(withClientIp(request), env, background);
-  },
-};
+    return (await serveStatic(request)) ?? handleRequest(withClientIp(request), env, background);
+  };
+}

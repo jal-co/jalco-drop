@@ -31,6 +31,9 @@
     "src/platform/node-*.ts",
     "src/view/css-vars.d.ts",
     "src/neon-function.ts",
-    "neon.ts"
+    "neon.ts",
+    "src/neon-entry.ts",
+    "src/neon-package.ts",
+    "src/neon-assets.d.ts"
   ]
 }

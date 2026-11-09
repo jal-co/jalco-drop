@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { Readable } from "node:stream";
 
-const { default: neonFunction } = await import(new URL("../dist/neon/index.mjs", import.meta.url).href);
+const { default: neonFunction } = await import(process.env.NEON_MODULE ?? new URL("../dist/neon/index.mjs", import.meta.url).href);
 
 createServer(async (incoming, outgoing) => {
   const url = new URL(incoming.url, `http://${incoming.headers.host}`);

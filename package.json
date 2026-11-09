@@ -37,7 +37,8 @@
     "skills",
     "public/favicon.svg",
     "package-lock.json",
-    "neon.ts"
+    "neon.ts",
+    "neon"
   ],
   "engines": {
     "node": ">=22.18"
@@ -61,9 +62,11 @@
     "test:e2e:node": "npm run build && npm run build:node && E2E_TARGET=node playwright test",
     "test:live": "bash test/live.sh",
     "check": "npm run typecheck && npm test && npm run test:node && npm run test:e2e && npm run test:e2e:node",
-    "build:neon": "npm run build && esbuild src/neon-function.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/neon/index.mjs --jsx=automatic --define:process.env.NODE_ENV='\"production\"' --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" && rm -rf dist/neon/public && cp -R public dist/neon/public",
+    "build:neon": "npm run build && esbuild src/neon-entry.ts --bundle --platform=node --target=node24 --format=esm --jsx=automatic --define:process.env.NODE_ENV='\"production\"' --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" --outfile=dist/neon/index.mjs && rm -rf dist/neon/public && cp -R public dist/neon/public",
     "deploy:neon": "npm run build:neon && npx neon@latest deploy --env .env",
-    "test:neon": "npm run build:neon && SMOKE_TARGET=neon STORAGE=s3 S3_ENDPOINT=$AWS_ENDPOINT_URL_S3 S3_BUCKET=${DROPS_BUCKET:-drops} bash test/smoke.sh"
+    "test:neon": "npm run build:neon && SMOKE_TARGET=neon STORAGE=s3 S3_ENDPOINT=$AWS_ENDPOINT_URL_S3 S3_BUCKET=${DROPS_BUCKET:-drops} bash test/smoke.sh",
+    "build:neon-package": "npm run build && node scripts/embed-assets.mjs src/neon-assets.json && esbuild src/neon-package.ts --bundle --platform=node --target=node24 --format=esm --jsx=automatic --define:process.env.NODE_ENV='\"production\"' --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" --alias:jalco-drop-assets=./src/neon-assets.json --outfile=neon/index.mjs",
+    "prepublishOnly": "npm run build:neon-package"
   },
   "devDependencies": {
     "@base-ui/react": "^1.9.0",
@@ -104,5 +107,9 @@
         "description": "Where uploads, tokens and settings are stored."
       }
     }
+  },
+  "exports": {
+    "./neon": "./neon/index.mjs",
+    "./package.json": "./package.json"
   }
 }

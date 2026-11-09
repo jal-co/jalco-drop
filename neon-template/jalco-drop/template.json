@@ -1,0 +1,17 @@
+{
+	"$schema": "https://neon.com/functions/registry/schemas/template.schema.json",
+	"id": "jalco-drop",
+	"provider": "jalco-drop",
+	"title": "Self-hosted file transfer with jalco-drop",
+	"description": "Share files, folders, pastes and screen recordings as links that open properly, stored in Neon Object Storage. Agents can upload and read them too.",
+	"categories": ["storage"],
+	"layout": "router",
+	"dependencies": ["jalco-drop@1.2.0"],
+	"environment": [
+		{
+			"name": "ADMIN_TOKEN",
+			"description": "Long random string (for example from openssl rand -base64 32) that signs in to /admin and the upload API. Keep it in a password manager.",
+			"required": true
+		}
+	]
+}
