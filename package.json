@@ -36,7 +36,8 @@
     "render.yaml",
     "skills",
     "public/favicon.svg",
-    "package-lock.json"
+    "package-lock.json",
+    "neon.ts"
   ],
   "engines": {
     "node": ">=22.18"
@@ -59,7 +60,10 @@
     "test:e2e": "npm run build && playwright test",
     "test:e2e:node": "npm run build && npm run build:node && E2E_TARGET=node playwright test",
     "test:live": "bash test/live.sh",
-    "check": "npm run typecheck && npm test && npm run test:node && npm run test:e2e && npm run test:e2e:node"
+    "check": "npm run typecheck && npm test && npm run test:node && npm run test:e2e && npm run test:e2e:node",
+    "build:neon": "npm run build && esbuild src/neon-function.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/neon/index.mjs --jsx=automatic --define:process.env.NODE_ENV='\"production\"' --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" && rm -rf dist/neon/public && cp -R public dist/neon/public",
+    "deploy:neon": "npm run build:neon && npx neon@latest deploy --env .env",
+    "test:neon": "npm run build:neon && SMOKE_TARGET=neon STORAGE=s3 S3_ENDPOINT=$AWS_ENDPOINT_URL_S3 S3_BUCKET=${DROPS_BUCKET:-drops} bash test/smoke.sh"
   },
   "devDependencies": {
     "@base-ui/react": "^1.9.0",
@@ -67,6 +71,7 @@
     "@cloudflare/workers-types": "^5.20261109.1",
     "@fortawesome/free-brands-svg-icons": "^7.3.1",
     "@fortawesome/free-solid-svg-icons": "^7.3.1",
+    "@neon/config": "^1.14.0",
     "@paper-design/shaders": "^0.0.82",
     "@pierre/theme": "^2.0.0",
     "@playwright/test": "^1.65.0",

@@ -4,6 +4,8 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
+- Deploy to Neon Functions: `npx jalco-drop init --target neon`, then `npm run deploy:neon`. `neon.ts` declares the function, a bucket and an hourly cleanup trigger.
+
 ## 1.1.0 (2026-11-09)
 
 - Text with terminal colour codes, such as test or build output, opens in colour.

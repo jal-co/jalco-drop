@@ -1,29 +1,16 @@
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { extname, join, normalize, resolve } from "node:path";
+import { resolve } from "node:path";
 import { Readable } from "node:stream";
 import { handleRequest, runScheduled, type Env } from "./app";
 import { captureCard } from "./platform/card-browser";
 import { FsStore, toWebStream } from "./platform/fs-store";
 import { S3Store } from "./platform/s3-store";
-import type { RateLimiter, Store } from "./platform/store";
+import { background, contentTypeOf, createRateLimiter, required, setting, staticPath } from "./platform/node-runtime";
+import type { Store } from "./platform/store";
 
 const HOUR_MS = 3_600_000;
-const RATE_WINDOW_MS = 60_000;
-const RATE_LIMIT = 60;
-const CONTENT_TYPES = new Map([
-  [".css", "text/css; charset=utf-8"], [".js", "text/javascript; charset=utf-8"], [".png", "image/png"],
-  [".woff2", "font/woff2"], [".txt", "text/plain; charset=utf-8"], [".svg", "image/svg+xml"], [".ico", "image/x-icon"],
-]);
-
-const setting = (name: string, fallback?: string) => process.env[name]?.trim() || fallback;
-
-function required(name: string) {
-  const value = setting(name);
-  if (!value) throw new Error(`Set ${name}. See the README's Docker section.`);
-  return value;
-}
 
 function createStore(): Store {
   if (setting("STORAGE", "disk") === "s3") {
@@ -36,23 +23,6 @@ function createStore(): Store {
     });
   }
   return new FsStore(resolve(setting("DATA_DIR", "./data") ?? "./data"));
-}
-
-function createRateLimiter(): RateLimiter {
-  const windows = new Map<string, { started: number; count: number }>();
-  return {
-    async limit({ key }) {
-      const now = Date.now();
-      const current = windows.get(key);
-      if (!current || now - current.started >= RATE_WINDOW_MS) {
-        windows.set(key, { started: now, count: 1 });
-        if (windows.size > 10_000) for (const [stale, window] of windows) if (now - window.started >= RATE_WINDOW_MS) windows.delete(stale);
-        return { success: true };
-      }
-      current.count++;
-      return { success: current.count <= RATE_LIMIT };
-    },
-  };
 }
 
 function createCardRenderer(port: number) {
@@ -68,15 +38,10 @@ function createCardRenderer(port: number) {
 }
 
 async function serveStatic(publicDir: string, pathname: string, response: ServerResponse) {
-  const path = normalize(join(publicDir, decodeURIComponent(pathname)));
-  if (!path.startsWith(publicDir) || pathname === "/") return false;
-  const file = await stat(path).catch(() => undefined);
-  if (!file?.isFile()) return false;
-  response.writeHead(200, {
-    "content-type": CONTENT_TYPES.get(extname(path)) ?? "application/octet-stream",
-    "content-length": String(file.size),
-    "cache-control": "public, max-age=0, must-revalidate",
-  });
+  const path = staticPath(publicDir, pathname);
+  const file = path ? await stat(path).catch(() => undefined) : undefined;
+  if (!path || !file?.isFile()) return false;
+  response.writeHead(200, { "content-type": contentTypeOf(path), "content-length": String(file.size), "cache-control": "public, max-age=0, must-revalidate" });
   createReadStream(path).pipe(response);
   return true;
 }
@@ -134,7 +99,6 @@ const env: Env = {
   HOME_URL: setting("HOME_URL"),
   RATE_LIMIT: setting("RATE_LIMIT"),
 };
-const background = { waitUntil: (promise: Promise<unknown>) => void promise.catch((error) => console.error(error)) };
 
 const server = createServer(async (incoming, outgoing) => {
   try {

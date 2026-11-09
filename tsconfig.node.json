@@ -29,6 +29,8 @@
     "src/platform/fs-store.ts",
     "src/platform/s3-store.ts",
     "src/platform/node-*.ts",
-    "src/view/css-vars.d.ts"
+    "src/view/css-vars.d.ts",
+    "src/neon-function.ts",
+    "neon.ts"
   ]
 }

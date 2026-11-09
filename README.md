@@ -43,6 +43,8 @@ npx jalco-drop init my-drop --domain drop.example.com --owner Tess --accent "#3b
 
 Not on Cloudflare? Pick `--target docker`: setup writes `.env` and `docker-compose.yml`, and `docker compose up -d --build` runs the same app as a Node server with Chromium for preview cards. Files go to a `/data` volume, or to any S3-compatible bucket (AWS S3, Backblaze B2, MinIO, R2's S3 API) with `STORAGE=s3`. Put a TLS reverse proxy (Caddy, nginx, Cloudflare Tunnel) in front of port 3000. See `.env.example` for every option.
 
+On [Neon](https://neon.com/docs/compute/functions/overview), pick `--target neon`, then `npx neon@latest link && npm run deploy:neon`. `neon.ts` declares the function, a bucket and an hourly cleanup trigger, so one deploy creates everything.
+
 In a clone, run `npm install && npm run setup` instead. Handing the repo to a coding agent works too: [AGENTS.md](AGENTS.md) walks it through the same steps.
 
 Settings start from `vars` in `wrangler.local.jsonc`: `SITE_NAME`, `OWNER_NAME`, `ACCENT_COLOR`, `CODE_THEME` and `HOME_URL`. After deploying, change them under **Settings** in `/admin`, with a live preview. Saved settings are stored in R2 and override the file without a redeploy; **Reset to deploy values** goes back to the file.

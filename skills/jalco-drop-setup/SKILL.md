@@ -1,6 +1,6 @@
 ---
 name: jalco-drop-setup
-description: Deploy a jalco-drop site on Cloudflare or Docker, sign the CLI in, and create scoped upload tokens for agents and bots. Use when the user wants their own file host or file transfer interface, says "set up jalco-drop", has no drop site yet, needs a token for an agent, CI job or bot, or when the jalco-drop skill finds no site or no token.
+description: Deploy a jalco-drop site on Cloudflare, Docker or Neon, sign the CLI in, and create scoped upload tokens for agents and bots. Use when the user wants their own file host or file transfer interface, says "set up jalco-drop", has no drop site yet, needs a token for an agent, CI job or bot, or when the jalco-drop skill finds no site or no token.
 ---
 
 # jalco-drop setup
@@ -21,6 +21,7 @@ Setup creates infrastructure on the user's account and mints credentials. Each s
 Ask one question: Cloudflare or Docker?
 
 - **Cloudflare**: one Worker and an R2 bucket on their account. Needs a Cloudflare account with R2 enabled; a domain is optional (it starts on `workers.dev`).
+- **Neon**: one Neon Function, a Neon bucket and an hourly cleanup trigger, all declared in `neon.ts`. Needs a Neon project in us-east-1, us-east-2, eu-central-1 or ap-southeast-1. No rendered link-preview images.
 - **Docker**: one container on any server, storing files on a disk or in any S3-compatible bucket. Needs a server with Docker and a reverse proxy with TLS in front of port 3000.
 
 ## Deploy
@@ -36,9 +37,11 @@ Ask one question: Cloudflare or Docker?
 3. Run setup without deploying first, so they can review:
    - Cloudflare: `npx jalco-drop init <dir> --domain <host> --owner <name> --yes`. It writes `wrangler.local.jsonc`.
    - Docker: `npx jalco-drop init <dir> --target docker --domain <host> --owner <name> --yes`. It writes `.env` (with a fresh admin token) and `docker-compose.yml`.
+   - Neon: `npx jalco-drop init <dir> --target neon --owner <name> --yes` (add `--domain` for a custom hostname). It writes `.env` with a fresh admin token.
 4. Ask before deploying. Then:
    - Cloudflare: `cd <dir> && npx wrangler r2 bucket create jalco-drop && npm run deploy && npx wrangler secret put ADMIN_TOKEN -c wrangler.local.jsonc`. The user types the token.
    - Docker: `cd <dir> && docker compose up -d --build`.
+   - Neon: `cd <dir> && npx neon@latest link && npm run deploy:neon`, then `npx neon@latest functions get drop` for the URL.
 5. Verify: `curl -s -o /dev/null -w '%{http_code}' https://<site>/style.css` returns `200`, and `/` returns a `302`.
 
 </workflow>

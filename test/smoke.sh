@@ -10,9 +10,11 @@ config=wrangler.local.jsonc
 
 target="${SMOKE_TARGET:-worker}"
 port=8799
-[[ "$target" == node ]] && port=8797
+[[ "$target" != worker ]] && port=8797
 export JALCO_DROP_URL="http://localhost:$port"
-if [[ "$target" == node ]]; then
+if [[ "$target" == neon ]]; then
+  ADMIN_TOKEN="$JALCO_DROP_TOKEN" PORT="$port" OWNER_NAME="$(jq -r '.vars.OWNER_NAME' "$config")" CODE_THEME="$(jq -r '.vars.CODE_THEME' "$config")" node test/neon-host.mjs >"$work/wrangler.log" 2>&1 &
+elif [[ "$target" == node ]]; then
   CHROME_PATH="${CHROME_PATH:-}" ADMIN_TOKEN="$JALCO_DROP_TOKEN" PORT="$port" DATA_DIR="$work/data" TEST_SCHEDULED=on OWNER_NAME="$(jq -r '.vars.OWNER_NAME' "$config")" CODE_THEME="$(jq -r '.vars.CODE_THEME' "$config")" node dist/server.mjs >"$work/wrangler.log" 2>&1 &
 else
   npx wrangler dev --config "$config" --test-scheduled --port "$port" --host "localhost:$port" --var "ADMIN_TOKEN:$JALCO_DROP_TOKEN" --persist-to "$work/state" >"$work/wrangler.log" 2>&1 &

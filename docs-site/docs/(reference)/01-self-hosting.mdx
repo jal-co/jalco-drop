@@ -1,17 +1,17 @@
 ---
 title: Self-hosting
-description: Every setting for the Cloudflare Worker and the Docker container, and how storage, previews and expiry work on each.
+description: Every setting for Cloudflare, Docker and Neon, and how storage, previews and expiry work on each.
 ---
 
-jalco-drop is one app with two entry points: `src/worker.ts` for Cloudflare and `src/node.ts` for Node and Docker. Storage, rate limiting, preview cards and the hourly cleanup sit behind small interfaces, so both behave the same.
+jalco-drop is one app with three entry points: `src/worker.ts` for Cloudflare, `src/node.ts` for Node and Docker, and `src/neon-function.ts` for Neon Functions. Storage, rate limiting, preview cards and the hourly cleanup sit behind small interfaces, so all three behave the same.
 
-| | Cloudflare | Docker |
-| --- | --- | --- |
-| Storage | R2 | A `/data` volume, or any S3-compatible bucket |
-| Preview cards | Browser Rendering | Chromium in the image |
-| Rate limit | Workers rate limiting, 60 a minute per IP | In memory, 60 a minute per IP |
-| Expiry cleanup | Hourly cron trigger | Hourly timer |
-| Largest upload | 100 MB (Cloudflare's limit) | `MAX_UPLOAD_MB`, default 100 |
+| | Cloudflare | Docker | Neon |
+| --- | --- | --- | --- |
+| Storage | R2 | A `/data` volume, or any S3-compatible bucket | A Neon bucket |
+| Preview cards | Browser Rendering | Chromium in the image | Summary card, no image |
+| Rate limit | Workers rate limiting, 60 a minute per IP | In memory, 60 a minute per IP | In memory, per instance |
+| Expiry cleanup | Hourly cron trigger | Hourly timer | Hourly schedule trigger |
+| Largest upload | 100 MB (Cloudflare's limit) | `MAX_UPLOAD_MB`, default 100 | Neon's request limit |
 
 ## Cloudflare
 
@@ -39,6 +39,14 @@ Settings are environment variables, usually in `.env`:
 | `TRUST_PROXY` | `true` | Read `X-Forwarded-*` from your reverse proxy |
 
 Run it behind a reverse proxy with TLS. Rotating `ADMIN_TOKEN` signs everyone out.
+
+## Neon
+
+`neon.ts` is the whole deployment: the `drop` function (built to `dist/neon` by `npm run build:neon`, with the static files beside it), a private `drops` bucket, and a `cleanup` trigger that POSTs to `/__scheduled` every hour. The function only runs cleanup when the request carries Neon's `X-Neon-Trigger-Invocation-Id` header, which Neon strips from outside callers.
+
+`npm run deploy:neon` reads `.env`: `ADMIN_TOKEN`, the optional `SITE_NAME`, `OWNER_NAME`, `ACCENT_COLOR`, `CODE_THEME` and `HOME_URL`, and `DROP_DOMAIN` to serve from your own hostname. The bucket's `AWS_*` credentials are injected by Neon.
+
+`npm run test:neon` runs the smoke tests against the Neon build with any S3 endpoint in `AWS_ENDPOINT_URL_S3`.
 
 ## Security
 

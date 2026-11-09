@@ -21,8 +21,8 @@ Usage:
   npm run setup                     configure an existing clone in place
 
 Options (any you leave out are asked for, unless --yes):
-  --target NAME        cloudflare or docker (default: cloudflare)
-  --domain HOST        hostname to serve from, e.g. drop.example.com (required)
+  --target NAME        cloudflare, docker or neon (default: cloudflare)
+  --domain HOST        hostname to serve from, e.g. drop.example.com (optional on neon)
   --owner NAME         who links say sent them, e.g. Justin
   --name NAME          site name shown in the interface (default: jalco-drop)
   --accent HEX         accent colour, e.g. #ff4f00
@@ -97,12 +97,36 @@ function copyProject(target) {
   if (!run("npm", ["install"], { cwd: target })) fail("npm install failed.");
 }
 
-async function setUpDocker() {
+function writeEnv(extra = {}) {
   const adminToken = randomBytes(32).toString("base64url");
-  const vars = { ADMIN_TOKEN: adminToken, SITE_NAME: name, OWNER_NAME: owner, ACCENT_COLOR: accent, CODE_THEME: theme, HOME_URL: home };
+  const vars = { ADMIN_TOKEN: adminToken, SITE_NAME: name, OWNER_NAME: owner, ACCENT_COLOR: accent, CODE_THEME: theme, HOME_URL: home, ...extra };
   const template = readFileSync(join(projectDir, ".env.example"), "utf8");
-  const env = template.replace(/^([A-Z_]+)=.*$/gm, (line, key) => (key in vars ? `${key}=${vars[key]}` : line));
-  writeFileSync(join(projectDir, ".env"), env, { mode: 0o600 });
+  const filled = template.replace(/^([A-Z_]+)=.*$/gm, (line, key) => (key in vars ? `${key}=${vars[key]}` : line));
+  const missing = Object.entries(extra).filter(([key]) => !new RegExp(`^${key}=`, "m").test(filled)).map(([key, value]) => `${key}=${value}`);
+  writeFileSync(join(projectDir, ".env"), [filled.trimEnd(), ...missing].join("\n") + "\n", { mode: 0o600 });
+  return adminToken;
+}
+
+function setUpNeon() {
+  const adminToken = writeEnv(domain ? { DROP_DOMAIN: domain } : {});
+  prompt?.close();
+  const cd = relative(process.cwd(), projectDir) ? `  cd ${relative(process.cwd(), projectDir)}\n` : "";
+  console.log(`
+Wrote .env${domain ? ` for https://${domain}` : ""}. To deploy to Neon Functions:
+${cd}  npx neon@latest link
+  npm run deploy:neon
+
+neon.ts declares the function, a "drops" bucket and an hourly cleanup trigger.
+Your project must be in a region with Functions and Object Storage (us-east-1, us-east-2, eu-central-1 or ap-southeast-1).
+Find the URL with: npx neon@latest functions get drop${domain ? `\nThen point ${domain} at it as Neon's custom domain guide describes.` : ""}
+
+Admin token (also in .env, keep that file private):
+  ${adminToken}`);
+  process.exit(0);
+}
+
+async function setUpDocker() {
+  const adminToken = writeEnv();
   cpSync(join(projectDir, "docker-compose.example.yml"), join(projectDir, "docker-compose.yml"));
   console.log(`\nWrote .env and docker-compose.yml for https://${domain}`);
   const start = await confirm("\nBuild and start the container now?");
@@ -127,14 +151,15 @@ if (command === "init") copyProject(projectDir);
 if (!existsSync(join(projectDir, "wrangler.jsonc"))) fail("Run this inside a jalco-drop checkout, or use npx jalco-drop init.");
 
 if (prompt) console.log("\nConfigure your drop site. Press Enter to keep a default.\n");
-const target = await ask("Host on cloudflare or docker", { flag: flags.target, fallback: "cloudflare", valid: (value) => value === "cloudflare" || value === "docker", hint: "Type cloudflare or docker." });
-const domain = (await ask("Domain to serve from", { flag: flags.domain, valid: (value) => HOSTNAME.test(value), hint: target === "docker" ? "A hostname like drop.example.com, pointed at the machine running Docker." : "A hostname like drop.example.com. Its zone must be on your Cloudflare account." })).toLowerCase();
+const target = await ask("Host on cloudflare, docker or neon", { flag: flags.target, fallback: "cloudflare", valid: (value) => ["cloudflare", "docker", "neon"].includes(value), hint: "Type cloudflare, docker or neon." });
+const domain = (await ask("Domain to serve from", { flag: flags.domain, fallback: target === "neon" ? "" : undefined, valid: (value) => HOSTNAME.test(value) || (target === "neon" && value === ""), hint: target === "docker" ? "A hostname like drop.example.com, pointed at the machine running Docker." : "A hostname like drop.example.com. Its zone must be on your Cloudflare account." })).toLowerCase();
 const owner = await ask("Your name, as in \"Justin sent you\"", { flag: flags.owner, fallback: DEFAULTS.owner, valid: (value) => value.length > 0 && value.length <= 60, hint: "1 to 60 characters." });
 const name = await ask("Site name", { flag: flags.name, fallback: DEFAULTS.name, valid: (value) => value.length > 0 && value.length <= 40, hint: "1 to 40 characters." });
 const accent = (await ask("Accent colour", { flag: flags.accent, fallback: DEFAULTS.accent, valid: (value) => HEX_COLOR.test(value), hint: "A hex colour like #ff4f00." })).toLowerCase();
 const theme = await ask("Code theme", { flag: flags.theme, fallback: DEFAULTS.codeTheme, valid: (value) => CODE_THEMES.includes(value), hint: `One of: ${CODE_THEMES.join(", ")}.` });
 const home = await ask("Where / redirects", { flag: flags.home, fallback: DEFAULTS.homeUrl, valid: (value) => URL.canParse(value), hint: "A full URL." });
 if (target === "docker") await setUpDocker();
+if (target === "neon") setUpNeon();
 const bucket = await ask("R2 bucket name", { flag: flags.bucket, fallback: "jalco-drop", valid: (value) => BUCKET.test(value), hint: "3 to 63 lowercase letters, digits or dashes." });
 
 const config = JSON.parse(readFileSync(join(projectDir, "wrangler.jsonc"), "utf8"));
