@@ -5,6 +5,6 @@ const body = source
   .replace(/^# Changelog\n+/, "")
   .replace(/^## Unreleased\n+(?=## )/m, "");
 writeFileSync(
-  new URL("../docs/11-changelog.mdx", import.meta.url),
+  new URL("../docs/12-changelog.mdx", import.meta.url),
   `---\ntitle: Changelog\ndescription: Every release of jalco-drop, newest first.\n---\n\n${body}`,
 );

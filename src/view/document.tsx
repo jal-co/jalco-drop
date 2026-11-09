@@ -9,6 +9,7 @@ function CardTags({ title, card }: { title: string; card: Card }) {
       <meta property="og:title" content={title} />
       <meta property="og:description" content={card.description} />
       <meta property="og:url" content={card.url} />
+      <link rel="alternate" type="application/json" href={`${card.url}?format=json`} />
       <meta name="twitter:card" content={card.image ? "summary_large_image" : "summary"} />
       <meta property="og:type" content={card.video ? "video.other" : "website"} />
       {card.video && (

@@ -24,6 +24,7 @@ Options:
   -s SLUG       choose the link path instead of a random one
   -e EXPIRY     expire after e.g. 12h or 7d
   -n NAME       display name (defaults to the file name)
+  -j            print the upload as JSON (slug, url, password, expiry) instead of the link
   -l            list drops
   -d SLUG       delete a drop
 
@@ -35,14 +36,15 @@ USAGE
 
 base="${JALCO_DROP_URL:?Set JALCO_DROP_URL to your drop site, e.g. https://drop.example.com}"
 token="${JALCO_DROP_TOKEN:?Set JALCO_DROP_TOKEN to your admin token}"
-password="" slug="" expires="" name=""
+password="" slug="" expires="" name="" json=""
 
-while getopts ":p:s:e:n:ld:h" opt; do
+while getopts ":p:s:e:n:jld:h" opt; do
   case "$opt" in
     p) password="$OPTARG" ;;
     s) slug="$OPTARG" ;;
     e) expires="$OPTARG" ;;
     n) name="$OPTARG" ;;
+    j) json=1 ;;
     l) curl -fsS -H "Authorization: Bearer $token" "$base/api/items"; echo; exit ;;
     d) curl -fsS -X DELETE -H "Authorization: Bearer $token" "$base/api/items/$OPTARG"; echo "Deleted $OPTARG"; exit ;;
     h) usage; exit ;;
@@ -104,6 +106,10 @@ if [[ "$status" != 201 ]]; then
   exit 1
 fi
 url="$(jq -r .url <<<"$body")"
+if [[ -n "$json" ]]; then
+  jq -c --arg name "$name" --arg expires "$expires" --arg password "$password" '{slug, url, name: $name, expires: (if $expires == "" then null else $expires end), password: (if $password == "" then null else $password end), json: "\(.url)?format=json"}' <<<"$body"
+  exit
+fi
 echo "$url"
 if [[ -t 1 ]] && command -v pbcopy >/dev/null; then
   printf '%s' "$url" | pbcopy

@@ -17,3 +17,11 @@ test("scrawl captures open with seekable moments and no private fields", async (
   expect(manifest).not.toContain("cursor");
   await expect(page.locator('meta[property="og:video"]')).toHaveCount(1);
 });
+
+test("recordings expose transcript and moments as JSON", async ({ request, baseURL }) => {
+  const slug = cli(baseURL!, [fixture("demo.scrawl")]);
+  const manifest = await (await request.get(`/${slug}?format=json`)).json();
+  expect(manifest).toMatchObject({ kind: "recording", transcript: "First the header, then the footer." });
+  expect(manifest.moments.map((moment: { at: number }) => moment.at)).toEqual([500, 3000]);
+  expect((await request.get(manifest.moments[0].frame)).headers()["content-type"]).toBe("image/png");
+});

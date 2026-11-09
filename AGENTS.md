@@ -39,7 +39,7 @@ Inside an existing clone, after `npm install`:
 npm run setup -- --domain drop.example.com --owner Tess --yes
 ```
 
-This writes `wrangler.jsonc` (gitignored) from `wrangler.example.jsonc`. It does not deploy unless `--deploy` is passed.
+This writes `wrangler.local.jsonc` (gitignored) from the `wrangler.jsonc` template; `npm run dev` and `npm run deploy` use it when it exists. It does not deploy unless `--deploy` is passed.
 
 ## 4. Deploy, with the person's go-ahead
 
@@ -62,7 +62,7 @@ For bots, create a named token under **Tokens** in `/admin` with only the permis
 
 ## Changing settings later
 
-Use **Settings** in `/admin`; it applies straight away. Or edit `vars` in `wrangler.jsonc` and run `npm run deploy` (settings saved in the admin override the file). Preview cards are cached per drop; existing ones keep their old colours until re-rendered.
+Use **Settings** in `/admin`; it applies straight away. Or edit `vars` in `wrangler.local.jsonc` and run `npm run deploy` (settings saved in the admin override the file). Preview cards are cached per drop; existing ones keep their old colours until re-rendered.
 
 ## Upgrading
 

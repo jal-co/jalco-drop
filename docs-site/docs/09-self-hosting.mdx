@@ -15,10 +15,10 @@ jalco-drop is one app with two entry points: `src/worker.ts` for Cloudflare and 
 
 ## Cloudflare
 
-Settings are `vars` in `wrangler.jsonc`, which setup writes from `wrangler.example.jsonc`. The hostname is bound as a custom domain, so its zone must be on the same Cloudflare account. `ADMIN_TOKEN` is a secret:
+Settings are `vars` in `wrangler.local.jsonc`, which setup writes from the `wrangler.jsonc` template. `npm run dev` and `npm run deploy` use it when it exists. The hostname is bound as a custom domain, so its zone must be on the same Cloudflare account. `ADMIN_TOKEN` is a secret:
 
 ```bash
-npx wrangler secret put ADMIN_TOKEN
+npx wrangler secret put ADMIN_TOKEN -c wrangler.local.jsonc
 npm run deploy
 ```
 

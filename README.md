@@ -1,8 +1,12 @@
 # jalco-drop
 
-Your own file, paste and screen-recording host. One Cloudflare Worker and an R2 bucket, or one Docker container anywhere. Name it, pick an accent colour and a code theme, and deploy. Docs, with a recording of each flow, are at [drop.justinlevine.me](https://drop.justinlevine.me).
+Your own WeTransfer, for people and agents. Send a file, a folder, a paste or a screen recording and get a link that opens properly, on your own domain. It runs on one Cloudflare Worker and an R2 bucket, or one Docker container anywhere. Docs, with a recording of each flow, are at [drop.justinlevine.me](https://drop.justinlevine.me).
 
-Upload a file, a folder, a paste or a screen recording, and get back a link worth sending:
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/jal-co/jalco-drop) [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/jal-co/jalco-drop)
+
+The Cloudflare button forks the repo into your account, creates the R2 bucket, asks for an `ADMIN_TOKEN` and deploys to a `workers.dev` address; add your domain under the Worker's Domains & Routes afterwards. The Render button runs the Docker image with a 10 GB disk and generates the admin token for you (Render needs a paid plan for disks).
+
+What each link opens as:
 
 - **Code and text** open highlighted with Shiki in the theme you choose, with line links (`#L12`).
 - **Markdown** renders as a document, frontmatter as a properties list. **HTML** runs in a sandboxed frame. `?view=source` shows either as source.
@@ -21,7 +25,7 @@ You need Node 22.18+, a Cloudflare account with the domain you want to serve fro
 npx jalco-drop init my-drop
 ```
 
-It copies the project, asks for your hostname, name, accent colour and code theme, writes `wrangler.jsonc`, and offers to create the bucket, deploy, and set an admin token. Every question has a flag, so it also runs unattended:
+It copies the project, asks for your hostname, name, accent colour and code theme, writes `wrangler.local.jsonc` (gitignored; `npm run dev` and `npm run deploy` prefer it over the committed `wrangler.jsonc` template), and offers to create the bucket, deploy, and set an admin token. Every question has a flag, so it also runs unattended:
 
 ```sh
 npx jalco-drop init my-drop --domain drop.example.com --owner Tess --accent "#3b82f6" --theme vesper --deploy --yes
@@ -31,9 +35,17 @@ Not on Cloudflare? Pick `--target docker`: setup writes `.env` and `docker-compo
 
 In a clone, run `npm install && npm run setup` instead. Handing the repo to a coding agent works too: [AGENTS.md](AGENTS.md) walks it through the same steps.
 
-Settings start from `vars` in `wrangler.jsonc`: `SITE_NAME`, `OWNER_NAME`, `ACCENT_COLOR`, `CODE_THEME` and `HOME_URL`. After deploying, change them under **Settings** in `/admin`, with a live preview. Saved settings are stored in R2 and override the file without a redeploy; **Reset to deploy values** goes back to the file.
+Settings start from `vars` in `wrangler.local.jsonc`: `SITE_NAME`, `OWNER_NAME`, `ACCENT_COLOR`, `CODE_THEME` and `HOME_URL`. After deploying, change them under **Settings** in `/admin`, with a live preview. Saved settings are stored in R2 and override the file without a redeploy; **Reset to deploy values** goes back to the file.
 
 `ADMIN_TOKEN` is the master key. It signs in to `/admin` and signs session, unlock and card cookies, so rotating it signs everyone out.
+
+## Agents
+
+```sh
+npx skills add jal-co/jalco-drop
+```
+
+The skill teaches an agent to send with the right password and expiry, refuse secrets, and read links it's given. Any drop link answers `?format=json` with its files and raw URLs, or a recording's transcript and marked moments, and a locked drop takes its password in an `X-Drop-Password` header. `jalco-drop -j` prints an upload as JSON.
 
 ## Tokens
 

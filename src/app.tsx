@@ -153,6 +153,8 @@ const unlockValue = (object: ObjectInfo) => `unlock:${object.key}:${object.uploa
 
 async function isUnlocked(request: Request, env: Env, object: ObjectInfo) {
   if (!object.customMetadata?.password) return true;
+  const password = request.headers.get("x-drop-password");
+  if (password !== null) return checkPassword(password, object.customMetadata.password);
   const token = readCookie(request, unlockCookieName(object.key));
   return Boolean(token) && (await verify(env.ADMIN_TOKEN, token!)) === unlockValue(object);
 }
@@ -452,6 +454,39 @@ async function serveCardFrame(env: Env, object: ObjectInfo, url: URL) {
   return respond(<CardPage sender={senderOf(toDrop(object))} title={summary.title} details={summary.details} seed={seed} />);
 }
 
+async function serveManifest(env: Env, object: ObjectInfo, origin: string) {
+  const drop = toDrop(object);
+  const raw = rawUrl(origin, drop);
+  const manifest = {
+    slug: drop.slug,
+    name: drop.name,
+    type: drop.type,
+    size: drop.size,
+    uploaded: drop.uploaded.toISOString(),
+    expires: drop.expires ? new Date(drop.expires).toISOString() : null,
+    sender: senderOf(drop),
+    url: dropHref(origin, drop),
+    raw,
+  };
+  const entries = isZip(drop) ? await listZip(env.DROPS, object.key, object.size) : null;
+  if (!entries) return Response.json(manifest);
+  const entryUrl = (path: string) => `${raw}?entry=${encodeURIComponent(path)}`;
+  const capture = await readScrawl(env, object, entries);
+  if (capture) {
+    const { scrawl, root } = capture;
+    return Response.json({
+      ...manifest,
+      kind: "recording",
+      video: entryUrl(`${root}${scrawl.video}`),
+      durationMs: scrawl.durationMs ?? null,
+      transcript: scrawl.transcript?.text ?? "",
+      contactSheet: scrawl.contactSheet ? entryUrl(`${root}${scrawl.contactSheet}`) : null,
+      moments: scrawl.keyframes.map((moment) => ({ at: Math.max(0, (moment.t ?? 0) - (scrawl.videoOffsetMs ?? 0)), said: moment.said ?? "", frame: moment.file ? entryUrl(`${root}${moment.file}`) : null })),
+    });
+  }
+  return Response.json({ ...manifest, kind: "folder", files: entries.filter((entry) => !entry.path.endsWith("/")).map((entry) => ({ path: entry.path, size: entry.size, raw: entryUrl(entry.path) })) });
+}
+
 async function serveShare(env: Env, object: ObjectInfo, origin: string) {
   const drop = toDrop(object);
   const [entries, card] = await Promise.all([listZip(env.DROPS, object.key, object.size), cardFor(env, object, origin)]);
@@ -667,10 +702,13 @@ async function route(request: Request, env: Env, context: Background) {
     }
 
     if (!(await isUnlocked(request, env, object)) && !(await admin())) {
-      return isRaw ? new Response("Password required", { status: 401 }) : respond(<UnlockPage slug={object.key} />, 401);
+      if (isRaw) return new Response("Password required", { status: 401 });
+      if (url.searchParams.get("format") === "json") return Response.json({ error: "Password required. Send it in the X-Drop-Password header." }, { status: 401 });
+      return respond(<UnlockPage slug={object.key} />, 401);
     }
     if (!isRaw && url.searchParams.has("card-frame")) return serveCardFrame(env, object, url);
     if (!isRaw && url.searchParams.has("card")) return serveCard(env, object, url.origin);
+    if (!isRaw && url.searchParams.get("format") === "json") return serveManifest(env, object, url.origin);
     const entryPath = url.searchParams.get("entry");
     if (isZip(toDrop(object)) && entryPath !== null) {
       const entry = await findEntry(env, object, entryPath);

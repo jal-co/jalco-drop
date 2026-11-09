@@ -7,7 +7,7 @@ const target = process.env.E2E_TARGET === "node" ? "node" : "worker";
 const port = Number(process.env.E2E_PORT ?? 8796);
 const token = "e2e-token";
 const work = mkdtempSync(join(tmpdir(), "jalco-drop-e2e-"));
-const config = existsSync("wrangler.jsonc") ? "wrangler.jsonc" : "wrangler.example.jsonc";
+const config = existsSync("wrangler.local.jsonc") ? "wrangler.local.jsonc" : "wrangler.jsonc";
 
 const servers = {
   worker: `npx wrangler dev --config ${config} --test-scheduled --port ${port} --host localhost:${port} --var ADMIN_TOKEN:${token} --var HOME_URL:https://example.com/ --var RATE_LIMIT:off --persist-to ${work}`,

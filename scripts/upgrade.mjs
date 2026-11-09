@@ -4,7 +4,7 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 
-const KEEP = new Set(["wrangler.jsonc", ".env", "docker-compose.yml", "data", "node_modules", ".git", ".wrangler", "dist"]);
+const KEEP = new Set(["wrangler.local.jsonc", ".env", "docker-compose.yml", "data", "node_modules", ".git", ".wrangler", "dist"]);
 const projectDir = process.cwd();
 const run = (command, args, options = {}) => spawnSync(command, args, { stdio: "inherit", cwd: projectDir, ...options }).status === 0;
 const fail = (message) => {
@@ -12,7 +12,7 @@ const fail = (message) => {
   process.exit(1);
 };
 
-if (!existsSync(join(projectDir, "wrangler.example.jsonc"))) fail("Run this inside your jalco-drop project.");
+if (!existsSync(join(projectDir, "wrangler.jsonc"))) fail("Run this inside your jalco-drop project.");
 const current = JSON.parse(readFileSync(join(projectDir, "package.json"), "utf8")).version;
 
 if (existsSync(join(projectDir, ".git"))) {

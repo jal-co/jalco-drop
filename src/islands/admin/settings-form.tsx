@@ -140,7 +140,7 @@ export function SettingsForm({ settings }: { settings: SettingsState }) {
         <ThemeGrid theme={draft.codeTheme} samples={settings.themeSamples} onChange={(codeTheme) => update({ codeTheme })} />
       </Section>
       <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-end gap-2 rounded-2xl bg-popover p-2 pl-4 shadow-overlay">
-        <p className="mr-auto text-[0.8125rem] text-muted-foreground">Applies straight away. The domain and bucket live in wrangler.jsonc.</p>
+        <p className="mr-auto text-[0.8125rem] text-muted-foreground">Applies straight away.</p>
         {settings.overridden && (
           <ConfirmForm
             action="/admin/settings/reset"

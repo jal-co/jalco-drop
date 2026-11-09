@@ -2,8 +2,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-config=wrangler.jsonc
-[[ -f "$config" ]] || config=wrangler.example.jsonc
+config=wrangler.local.jsonc
+[[ -f "$config" ]] || config=wrangler.jsonc
 app="${LIVE_URL:-https://$(grep -o '"pattern": *"[^"]*"' "$config" | head -1 | sed 's/.*"\([^"]*\)"$/\1/')}"
 docs="${DOCS_URL:-https://drop.justinlevine.me}"
 version="$(jq -r .version package.json)"

@@ -1,0 +1,69 @@
+---
+title: Agents
+description: Let a coding agent send files with the right password and expiry, and read any drop link it's given.
+---
+
+jalco-drop is built to sit between people and agents. An agent can send you a link you'd want to open, and you can send an agent a link it can actually read.
+
+## Install the skill
+
+```bash
+npx skills add jal-co/jalco-drop
+```
+
+The skill teaches an agent when to upload and when to refuse: it reads what it's about to send, refuses secrets, adds a password to anything private and an expiry to anything temporary, and never prints your token. Give it a [named token](/tokens) with only the permissions it needs, rather than the admin token:
+
+```bash
+export JALCO_DROP_URL=https://drop.example.com
+export JALCO_DROP_TOKEN=<a named token>
+```
+
+## Read a link
+
+Append `?format=json` to any drop link. It works in web fetch tools, which can't set headers.
+
+```bash
+curl "https://drop.example.com/k3x9q2m8vt?format=json"
+```
+
+```json
+{
+  "slug": "k3x9q2m8vt",
+  "name": "repro.zip",
+  "sender": "Tess",
+  "expires": "2026-11-16T09:00:00.000Z",
+  "raw": "https://drop.example.com/k3x9q2m8vt/repro.zip",
+  "kind": "folder",
+  "files": [
+    { "path": "repro/README.md", "size": 412, "raw": "https://drop.example.com/k3x9q2m8vt/repro.zip?entry=repro%2FREADME.md" }
+  ]
+}
+```
+
+| `kind` | Extra fields |
+| --- | --- |
+| none | A single file. `raw` is its bytes. |
+| `folder` | `files`, each with a `path`, `size` and `raw` URL, so an agent fetches only what it needs. |
+| `recording` | A [Scrawl](https://scrawl.kitlangton.com) capture: `transcript`, `contactSheet`, `video`, and `moments`, each with `at` (milliseconds), `said` and a `frame` image. |
+
+Every page also carries `<link rel="alternate" type="application/json">`, so an agent that fetches the page finds the JSON on its own.
+
+A locked drop answers `401` until the password arrives in an `X-Drop-Password` header:
+
+```bash
+curl -H "X-Drop-Password: hunter2" "https://drop.example.com/k3x9q2m8vt?format=json"
+```
+
+## Machine-readable uploads
+
+`-j` prints the upload as JSON instead of a bare link:
+
+```bash
+git diff | jalco-drop -j -n fix.diff -e 7d
+```
+
+```json
+{"slug":"k3x9q2m8vt","url":"https://drop.example.com/k3x9q2m8vt","name":"fix.diff","expires":"7d","password":null,"json":"https://drop.example.com/k3x9q2m8vt?format=json"}
+```
+
+The [HTTP API](/api) does the same without the CLI.

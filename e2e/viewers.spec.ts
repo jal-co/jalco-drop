@@ -73,3 +73,11 @@ test("drop pages carry link preview tags", async ({ page, request }) => {
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", "preview.txt");
   await expect(page.locator('meta[name="generator"]')).toHaveAttribute("content", /^jalco-drop \d+\.\d+\.\d+$/);
 });
+
+test("drops describe themselves as JSON for agents", async ({ request }) => {
+  const slug = await upload(request, "for agents\n", { name: "agent.txt", password: "pw" });
+  expect((await request.get(`/${slug}?format=json`)).status()).toBe(401);
+  const manifest = await (await request.get(`/${slug}?format=json`, { headers: { "x-drop-password": "pw" } })).json();
+  expect(manifest).toMatchObject({ slug, name: "agent.txt", raw: expect.stringContaining(`/${slug}/agent.txt`) });
+  expect(await (await request.get(manifest.raw, { headers: { "x-drop-password": "pw" } })).text()).toBe("for agents\n");
+});

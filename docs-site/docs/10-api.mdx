@@ -27,6 +27,10 @@ Returns `201` with `{ "slug": "k3x9...", "url": "https://drop.example.com/k3x9..
 
 `DELETE /api/items/<slug>` returns `204`. Needs the **delete** permission.
 
+## Read a drop
+
+`GET /<slug>?format=json` describes any drop without a token: its name, sender, expiry and `raw` URL, plus the files of a folder or the transcript and moments of a recording. A locked drop needs its password in an `X-Drop-Password` header. See [Agents](/agents) for the full shape.
+
 ## Errors
 
 | Status | Meaning |

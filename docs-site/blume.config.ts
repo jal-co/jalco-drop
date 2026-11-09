@@ -29,7 +29,6 @@ export default defineConfig({
   footer: {
     copyright: `© ${new Date().getFullYear()} Justin Levine. MIT licensed.`,
     links: [
-      { href: "https://drop.example.com", label: "Live instance" },
       { href: "https://scrawl.kitlangton.com", label: "Scrawl" },
     ],
   },

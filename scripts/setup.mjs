@@ -9,7 +9,7 @@ import { parseArgs } from "node:util";
 import { CODE_THEMES, DEFAULTS } from "../src/config.ts";
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SKIP_ON_COPY = new Set(["node_modules", ".git", ".wrangler", "wrangler.jsonc", ".dev.vars", "public/js", "public/style.css", "public/grain.js"]);
+const SKIP_ON_COPY = new Set(["node_modules", ".git", ".wrangler", "wrangler.local.jsonc", ".dev.vars", "public/js", "public/style.css", "public/grain.js"]);
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const HOSTNAME = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 const BUCKET = /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/;
@@ -124,7 +124,7 @@ const command = positionals[0];
 if (command !== undefined && command !== "init") fail(`Unknown command "${command}".\n\n${HELP}`);
 const projectDir = command === "init" ? resolve(positionals[1] ?? "jalco-drop") : process.cwd();
 if (command === "init") copyProject(projectDir);
-if (!existsSync(join(projectDir, "wrangler.example.jsonc"))) fail("Run this inside a jalco-drop checkout, or use npx jalco-drop init.");
+if (!existsSync(join(projectDir, "wrangler.jsonc"))) fail("Run this inside a jalco-drop checkout, or use npx jalco-drop init.");
 
 if (prompt) console.log("\nConfigure your drop site. Press Enter to keep a default.\n");
 const target = await ask("Host on cloudflare or docker", { flag: flags.target, fallback: "cloudflare", valid: (value) => value === "cloudflare" || value === "docker", hint: "Type cloudflare or docker." });
@@ -137,16 +137,17 @@ const home = await ask("Where / redirects", { flag: flags.home, fallback: DEFAUL
 if (target === "docker") await setUpDocker();
 const bucket = await ask("R2 bucket name", { flag: flags.bucket, fallback: "jalco-drop", valid: (value) => BUCKET.test(value), hint: "3 to 63 lowercase letters, digits or dashes." });
 
-const config = JSON.parse(readFileSync(join(projectDir, "wrangler.example.jsonc"), "utf8"));
+const config = JSON.parse(readFileSync(join(projectDir, "wrangler.jsonc"), "utf8"));
+config.workers_dev = false;
 config.routes = [{ pattern: domain, custom_domain: true }];
 config.r2_buckets = [{ binding: "DROPS", bucket_name: bucket }];
 config.vars = { SITE_NAME: name, OWNER_NAME: owner, ACCENT_COLOR: accent, CODE_THEME: theme, HOME_URL: home };
-writeFileSync(join(projectDir, "wrangler.jsonc"), `${JSON.stringify(config, null, 2)}\n`);
-console.log(`\nWrote wrangler.jsonc for https://${domain}`);
+writeFileSync(join(projectDir, "wrangler.local.jsonc"), `${JSON.stringify(config, null, 2)}\n`);
+console.log(`\nWrote wrangler.local.jsonc for https://${domain}`);
 
 if (!(await confirm("\nCreate the R2 bucket, deploy, and set a new admin token now?"))) {
   prompt?.close();
-  console.log(`\nWhen you're ready:\n${relative(process.cwd(), projectDir) ? `  cd ${relative(process.cwd(), projectDir)}\n` : ""}  npx wrangler r2 bucket create ${bucket}\n  npm run deploy\n  npx wrangler secret put ADMIN_TOKEN`);
+  console.log(`\nWhen you're ready:\n${relative(process.cwd(), projectDir) ? `  cd ${relative(process.cwd(), projectDir)}\n` : ""}  npx wrangler r2 bucket create ${bucket}\n  npm run deploy\n  npx wrangler secret put ADMIN_TOKEN -c wrangler.local.jsonc`);
   process.exit(0);
 }
 prompt?.close();
@@ -157,7 +158,7 @@ const bucketList = spawnSync("npx", ["wrangler", "r2", "bucket", "list"], { cwd:
 if (!new RegExp(`name:\\s+${bucket}\\s*$`, "m").test(bucketList.stdout ?? "") && !wrangler(["r2", "bucket", "create", bucket])) fail(`Could not create the R2 bucket ${bucket}.`);
 if (!run("npm", ["run", "deploy"], { cwd: projectDir })) fail("Deploy failed. Check that the domain's zone is on this Cloudflare account.");
 const adminToken = randomBytes(32).toString("base64url");
-if (!wrangler(["secret", "put", "ADMIN_TOKEN"], { input: adminToken, stdio: ["pipe", "inherit", "inherit"] })) fail("Could not set ADMIN_TOKEN. Run npx wrangler secret put ADMIN_TOKEN yourself.");
+if (!wrangler(["secret", "put", "ADMIN_TOKEN", "-c", "wrangler.local.jsonc"], { input: adminToken, stdio: ["pipe", "inherit", "inherit"] })) fail("Could not set ADMIN_TOKEN. Run npx wrangler secret put ADMIN_TOKEN -c wrangler.local.jsonc yourself.");
 
 console.log(`
 Done. Your drop site is at https://${domain}

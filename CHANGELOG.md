@@ -4,6 +4,11 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
+- **Breaking:** `wrangler.jsonc` is now a committed template that deploys to `workers.dev`, and your settings live in a gitignored `wrangler.local.jsonc`. `npm run dev` and `npm run deploy` prefer it. To upgrade, rename your `wrangler.jsonc` to `wrangler.local.jsonc`.
+- Deploy to Cloudflare and Deploy to Render buttons.
+- Any drop link answers `?format=json` with its files, raw URLs, or a recording's transcript and moments. Pages advertise it with `rel="alternate"`, and locked drops take an `X-Drop-Password` header.
+- `jalco-drop -j` prints an upload as JSON.
+- An installable agent skill: `npx skills add jal-co/jalco-drop`.
 - Playwright end-to-end tests for every flow, on Cloudflare and Node, run in CI and before each release, plus a live check after deploy.
 - Docs match the app's type scale and colours.
 - `RATE_LIMIT=off` disables the per-IP limit (used by the test servers).

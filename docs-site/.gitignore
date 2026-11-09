@@ -2,5 +2,5 @@ node_modules/
 .blume/
 dist/
 .env.local
-docs/11-changelog.mdx
+docs/12-changelog.mdx
 .wrangler/

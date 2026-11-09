@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: jalco-drop
+    runtime: docker
+    plan: starter
+    healthCheckPath: /style.css
+    disk:
+      name: drops
+      mountPath: /data
+      sizeGB: 10
+    envVars:
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: OWNER_NAME
+        sync: false
+      - key: SITE_NAME
+        value: jalco-drop

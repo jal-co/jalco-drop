@@ -19,3 +19,11 @@ test("folders open as a share page with a preview drawer", async ({ page, baseUR
 
   await expect(page.getByRole("link", { name: /Download/ })).toHaveAttribute("href", /download=1/);
 });
+
+test("folders list their files as JSON", async ({ request, baseURL }) => {
+  const slug = cli(baseURL!, [fixture("skill")]);
+  const manifest = await (await request.get(`/${slug}?format=json`)).json();
+  expect(manifest.kind).toBe("folder");
+  const skill = manifest.files.find((file: { path: string }) => file.path === "skill/SKILL.md");
+  expect(await (await request.get(skill.raw)).text()).toContain("name: e2e-skill");
+});
