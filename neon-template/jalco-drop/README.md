@@ -40,6 +40,9 @@ echo "ADMIN_TOKEN=$(openssl rand -base64 32)" >> .env.local
 <EnvironmentVariables>
 
 - `ADMIN_TOKEN`: A long random string that signs in to `/admin` and the upload API, and signs session and unlock cookies. Rotating it signs everyone out.
+- `OWNER_NAME`, `SITE_NAME`, `ACCENT_COLOR`, `CODE_THEME`, `HOME_URL` (optional): starting values for the site's settings. You can change all of them later under Settings in `/admin` without redeploying.
+- `DROPS_BUCKET` (optional): the bucket drops are stored in. Defaults to `drops`.
+- `RATE_LIMIT` (optional): set to `off` to disable the per-IP limit of 60 requests a minute.
 
 </EnvironmentVariables>
 
@@ -74,8 +77,6 @@ Add `?format=json` to any drop link to read it as JSON.
 
 ## Routes
 
-<Operations>
-
 | Route | Auth | Purpose |
 | --- | --- | --- |
 | `GET /<slug>` | Password, if the drop has one | Opens a drop in the browser. Add `?format=json` for its files and raw URLs. |
@@ -85,8 +86,6 @@ Add `?format=json` to any drop link to read it as JSON.
 | `DELETE /api/items/<slug>` | Bearer token with delete | Deletes a drop. |
 | `POST /api/tokens` | Admin token | Creates a named token for a bot or agent. |
 | `POST /__scheduled` | Neon trigger only | Deletes expired drops. Requests without Neon's `X-Neon-Trigger-Invocation-Id` header get `401`. |
-
-</Operations>
 
 `/` redirects away, nothing is listed without a token, and each IP gets 60 requests a minute.
 
