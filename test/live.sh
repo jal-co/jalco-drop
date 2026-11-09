@@ -32,7 +32,7 @@ check "home redirects away" 302 "$(status "$app/")"
 check "styles load" 200 "$(status "$app/style.css")"
 check "unknown slugs are 404" 404 "$(status "$app/live-check-missing-$RANDOM")"
 check "the API needs a token" 401 "$(status "$app/api/items")"
-check "link preview bots are allowed" yes "$(curl -s "$app/robots.txt" | grep -q 'Twitterbot' && echo yes || echo no)"
+check "link preview bots are allowed" yes "$(curl -s "$app/robots.txt" | grep Twitterbot >/dev/null && echo yes || echo no)"
 
 if [[ -n "${JALCO_DROP_TOKEN:-}" ]]; then
   url="$(printf 'live check %s\n' "$version" | JALCO_DROP_URL="$app" bin/jalco-drop -n live-check.txt -e 1h 2>/dev/null)"
@@ -44,7 +44,7 @@ else
 fi
 
 check "docs load" 200 "$(status "$docs/")"
-check "docs changelog lists $version" yes "$(curl -s "$docs/changelog" | grep -qF "$version" && echo yes || echo no)"
+check "docs changelog lists $version" yes "$(curl -s "$docs/changelog" | grep -F "$version" >/dev/null && echo yes || echo no)"
 check "docs OG card" "200 image/png" "$(curl -s -o /dev/null -w '%{http_code} %{content_type}' "$docs/og/index.png")"
 check "docs videos" 200 "$(status "$docs/videos/code.mp4")"
 
