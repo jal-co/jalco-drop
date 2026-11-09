@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: Geist; src: url("../../public/fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; }
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1200px; height: 630px; overflow: hidden; }
+body { position: relative; background: oklch(0.145 0 0); color: oklch(0.95 0 0); font-family: Geist, sans-serif; -webkit-font-smoothing: antialiased; }
+.copy { position: absolute; left: 72px; top: 72px; bottom: 72px; width: 470px; display: flex; flex-direction: column; }
+.brand { display: flex; align-items: center; gap: 14px; font-size: 26px; font-weight: 500; }
+.brand svg { height: 36px; width: auto; }
+h1 { margin-top: auto; font-size: 54px; line-height: 1.04; font-weight: 600; letter-spacing: -0.035em; text-wrap: balance; }
+p { margin-top: 20px; font-size: 23px; line-height: 1.4; color: oklch(0.68 0 0); text-wrap: pretty; }
+.host { margin-top: auto; padding-top: 28px; font-size: 19px; color: oklch(0.6 0 0); }
+.shot { position: absolute; left: 556px; top: 104px; width: 680px; border-radius: 18px; overflow: hidden; box-shadow: inset 0 0 0 1px oklch(1 0 0 / 8%), 0 0 0 1px oklch(1 0 0 / 7%), 0 40px 80px -20px oklch(0 0 0 / 70%); }
+.shot img { display: block; width: 100%; }
+</style>
+</head>
+<body>
+<div class="copy">
+  <div class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="51.6 50.3 675.3 780.4"><path fill="#ff4f00" d="M466.414 252.3L466.414 643L593.564 643C603.183 643 607.191 653.6 600.778 661.6L461.004 830.7C538.656 813.9 606.89 765.3 654.985 704.4C701.877 645.1 729.331 570.4 726.726 495.7C724.722 422.2 698.17 363.5 650.676 307.3C613.303 263 567.613 226.1 523.827 187.3C475.633 144.7 431.546 99.1 390.465 50.3C355.196 91.1 321.931 129.7 281.351 167.1C235.561 209.4 185.162 246.2 143.079 292.1C88.773 351.4 56.108 414.8 52.101 485.9C47.692 558.6 73.543 631.8 115.625 689.6C164.121 756.3 235.16 812.2 320.628 830.7L180.653 662.1C174.04 654.2 177.848 643 187.567 643L314.917 643L314.917 252.3C314.917 245.9 319.225 241.3 325.638 241.3L455.293 241.3C461.906 241.3 466.414 245.9 466.414 252.3Z"/></svg><span>jalco-drop</span></div>
+  <h1>A self-hosted file transfer interface</h1>
+  <p>For people and agents. Your domain, your storage, links that open properly.</p>
+  <div class="host">drop.justinlevine.me</div>
+</div>
+<div class="shot"><img src="share-frame.jpg"></div>
+</body>
+</html>

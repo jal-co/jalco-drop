@@ -6,7 +6,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { CODE_THEMES, DEFAULTS } from "../src/config.ts";
+import { CODE_THEMES, DEFAULTS } from "../src/defaults.mjs";
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SKIP_ON_COPY = new Set(["node_modules", ".git", ".wrangler", "wrangler.local.jsonc", ".dev.vars", "public/js", "public/style.css", "public/grain.js"]);

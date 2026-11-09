@@ -124,7 +124,7 @@ Versions follow semver; the running version shows in the `/admin` footer. Add no
 npm run release -- minor   # or patch, major, 1.2.0; --dry-run to preview
 ```
 
-It moves the notes under the new version, bumps `package.json`, freezes the previous docs as an archived Blume version on a minor or major bump (with the version switcher, an "old version" notice and canonical links to the latest), runs the typecheck plus the smoke and end-to-end tests on Cloudflare and Node, commits, tags, pushes, creates the GitHub release, deploys the app and the docs, and checks both live sites serve the new version. Self-hosters upgrade with `npx jalco-drop upgrade`, or `git pull` in a clone.
+It moves the notes under the new version, bumps `package.json`, freezes the previous docs as an archived Blume version on a minor or major bump (with the version switcher, an "old version" notice and canonical links to the latest), runs the typecheck plus the smoke and end-to-end tests on Cloudflare and Node, commits, tags and pushes (the tag publishes to npm through `.github/workflows/publish.yml`), creates the GitHub release, deploys the app and the docs, and checks both live sites serve the new version. Self-hosters upgrade with `npx jalco-drop upgrade`, or `git pull` in a clone.
 
 ## Credits
 

@@ -34,7 +34,9 @@
     "wrangler.jsonc",
     ".dev.vars.example",
     "render.yaml",
-    "skills"
+    "skills",
+    "public/favicon.svg",
+    "package-lock.json"
   ],
   "engines": {
     "node": ">=22.18"

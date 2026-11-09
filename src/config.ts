@@ -1,21 +1,6 @@
-export const CODE_THEMES = [
-  "pierre-dark",
-  "github-dark",
-  "github-dark-dimmed",
-  "vesper",
-  "vitesse-dark",
-  "tokyo-night",
-  "catppuccin-mocha",
-  "rose-pine",
-  "nord",
-  "one-dark-pro",
-  "dracula",
-  "night-owl",
-  "poimandres",
-  "houston",
-  "ayu-dark",
-  "min-dark",
-] as const;
+import { CODE_THEMES, DEFAULTS as BASE_DEFAULTS } from "./defaults.mjs";
+
+export { CODE_THEMES };
 
 export type CodeTheme = (typeof CODE_THEMES)[number];
 
@@ -27,7 +12,7 @@ export type SiteConfig = {
   homeUrl: string;
 };
 
-export const DEFAULTS: SiteConfig = { name: "jalco-drop", owner: "Someone", accent: "#ff4f00", codeTheme: "pierre-dark", homeUrl: "https://www.google.com/" };
+export const DEFAULTS: SiteConfig = BASE_DEFAULTS;
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const isCodeTheme = (value: string): value is CodeTheme => CODE_THEMES.some((theme) => theme === value);

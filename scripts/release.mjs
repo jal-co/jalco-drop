@@ -11,7 +11,8 @@ Usage:
 Moves the "## Unreleased" notes in CHANGELOG.md under the new version, freezes
 the previous docs as an archived Blume version on a minor or major bump, bumps
 package.json, runs the typecheck, smoke and end-to-end tests on Cloudflare and Node,
-builds the docs, commits, tags, pushes, creates a GitHub release, deploys
+builds the docs, commits, tags, pushes (the tag publishes to npm from
+GitHub Actions), creates a GitHub release, deploys
 the app and the docs, and checks the live sites serve the new version.`;
 
 const { values: flags, positionals } = parseArgs({
@@ -82,6 +83,7 @@ step("Commit", "git", ["commit", "-m", `release: ${tag}`]);
 step("Tag", "git", ["tag", "-a", tag, "-m", tag]);
 step("Push", "git", ["push", "origin", "main", "--follow-tags"]);
 step("GitHub release", "gh", ["release", "create", tag, "--title", tag, "--notes", notes]);
+console.log("\nThe tag starts .github/workflows/publish.yml, which publishes to npm.");
 if (!flags["no-deploy"]) {
   step("Deploy the app", "npm", ["run", "deploy"]);
   step("Deploy the docs", "npm", ["run", "deploy"], "docs-site");
