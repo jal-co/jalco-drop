@@ -21,4 +21,4 @@ jobs:
       - run: test "v$(jq -r .version package.json)" = "$GITHUB_REF_NAME"
       - run: npm ci
       - run: npm run typecheck
-      - run: npm publish --access public --provenance
+      - run: npm view "jalco-drop@$(jq -r .version package.json)" version || npm publish --access public --provenance
