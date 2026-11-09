@@ -1,0 +1,102 @@
+---
+title: Agents
+description: Let a coding agent send files with the right password and expiry, and read any drop link it's given.
+---
+
+jalco-drop is built to sit between people and agents. An agent can send you a link you'd want to open, and you can send an agent a link it can actually read.
+
+## Install the skills
+
+```bash
+npx skills add jal-co/jalco-drop
+```
+
+This installs two skills from [skills.sh](https://skills.sh) into Claude Code, Codex, Cursor and the other agents it supports:
+
+| Skill | What the agent can do |
+| --- | --- |
+| `jalco-drop` | Send files, folders, diffs, Scrawl captures, Superwhisper notes and agent sessions; read any drop link; list and delete drops. It scans for secrets before every upload, adds a password to anything private and an expiry to anything temporary, and never prints your token. |
+| `jalco-drop-setup` | Deploy a site on Cloudflare or Docker, sign the CLI in, and mint a scoped token for itself. It asks before creating anything and never handles your admin token directly. |
+
+## Sign in
+
+```bash
+jalco-drop login https://drop.example.com
+```
+
+`login` checks the token against the site and saves both to `~/.config/jalco-drop/config`, readable only by you. `jalco-drop whoami` prints the site, the token's name and what it may do, which is how an agent checks before it tries. `JALCO_DROP_URL` and `JALCO_DROP_TOKEN` still override the saved login.
+
+No CLI on the machine? Every site serves it:
+
+```bash
+curl -fsSL https://drop.example.com/cli -o ~/.local/bin/jalco-drop && chmod +x ~/.local/bin/jalco-drop
+```
+
+## A token of its own
+
+Give an agent a [named token](/v1.1/tokens) with only the permissions it needs. With the admin token, `POST /api/tokens` creates one and returns it once; piping it straight into `login` means it is never printed:
+
+```bash
+curl -sf -X POST https://drop.example.com/api/tokens \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -F name=Claude -F sender="Tess's Claude" -F permissions=upload -F avatar=@claude.svg \
+  | jq -r .token | jalco-drop login https://drop.example.com
+```
+
+## Read a link
+
+Append `?format=json` to any drop link. It works in web fetch tools, which can't set headers.
+
+```bash
+curl "https://drop.example.com/k3x9q2m8vt?format=json"
+```
+
+```json
+{
+  "slug": "k3x9q2m8vt",
+  "name": "repro.zip",
+  "sender": "Tess",
+  "expires": "2026-11-16T09:00:00.000Z",
+  "raw": "https://drop.example.com/k3x9q2m8vt/repro.zip",
+  "kind": "folder",
+  "files": [
+    { "path": "repro/README.md", "size": 412, "raw": "https://drop.example.com/k3x9q2m8vt/repro.zip?entry=repro%2FREADME.md" }
+  ]
+}
+```
+
+| `kind` | Extra fields |
+| --- | --- |
+| none | A single file. `raw` is its bytes. |
+| `folder` | `files`, each with a `path`, `size` and `raw` URL, so an agent fetches only what it needs. |
+| `recording` | A [Scrawl](https://scrawl.kitlangton.com) capture: `transcript`, `contactSheet`, `video`, and `moments`, each with `at` (milliseconds), `said` and a `frame` image. |
+| `transcript` | A Superwhisper note: `text`, `audio`, `speakers`, and `segments`, each with `at` and `end` (milliseconds), `text` and `speaker`. |
+
+Every page also carries `<link rel="alternate" type="application/json">`, so an agent that fetches the page finds the JSON on its own.
+
+A locked drop answers `401` until the password arrives in an `X-Drop-Password` header:
+
+```bash
+curl -H "X-Drop-Password: hunter2" "https://drop.example.com/k3x9q2m8vt?format=json"
+```
+
+## Machine-readable uploads
+
+`-j` prints the upload as JSON instead of a bare link:
+
+```bash
+git diff | jalco-drop -j -n fix.diff -e 7d
+```
+
+```json
+{
+  "slug": "k3x9q2m8vt",
+  "url": "https://drop.example.com/k3x9q2m8vt",
+  "name": "fix.diff",
+  "expires": "7d",
+  "password": null,
+  "json": "https://drop.example.com/k3x9q2m8vt?format=json"
+}
+```
+
+The [HTTP API](/v1.1/api) does the same without the CLI.

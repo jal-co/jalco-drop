@@ -4,6 +4,8 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
+## 1.2.0 (2026-11-09)
+
 - Deploy to Neon Functions: `npx jalco-drop init --target neon`, then `npm run deploy:neon`. `neon.ts` declares the function, a bucket and an hourly cleanup trigger.
 - `jalco-drop/neon` exports the Neon Function with its static files built in, so a one-line module can deploy it. `neon-template/` holds the Neon Function Registry template that uses it.
 
