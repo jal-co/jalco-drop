@@ -4,6 +4,10 @@ export default defineConfig({
   title: "jalco-drop",
   description: "Your own file, paste and screen-recording host. One Cloudflare Worker and an R2 bucket, or one Docker container anywhere.",
   logo: "/logo.svg",
+  redirects: [
+    { from: "/share-pages", to: "/file-types/folders" },
+    { from: "/scrawl", to: "/file-types/scrawl" },
+  ],
   deployment: { site: "https://drop.justinlevine.me" },
   versions: {
     current: { label: "v1.0", badge: "Latest" },

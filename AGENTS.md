@@ -75,3 +75,4 @@ Run `npx jalco-drop upgrade` (or `git pull` in a clone), read `CHANGELOG.md` for
 - UI is shadcn on Base UI in `src/components/ui/`, themed in `src/styles.css`. Restyle variants there, not with overrides at call sites.
 - Note user-facing changes under `## Unreleased` in `CHANGELOG.md`. `npm run release -- <patch|minor|major>` cuts the version, snapshots the Blume docs in `docs-site/` on a minor or major bump, tags, releases and deploys both sites.
 - When a change alters a flow, update its page in `docs-site/docs/` and re-record the matching clip in `docs-site/public/videos/`.
+- A new format in `src/formats/` gets its own page in `docs-site/docs/file-types/`. The parenthesized folders under `docs-site/docs/` group the sidebar without changing URLs.

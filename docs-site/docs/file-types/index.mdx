@@ -1,0 +1,29 @@
+---
+title: File types
+sidebar:
+  label: Overview
+description: How each kind of file opens, and how to get at the raw bytes.
+---
+
+<video className="drop-video" src="/videos/formats.mp4" poster="/videos/formats.jpg" controls muted playsInline preload="none" aria-label="A markdown file with frontmatter, a CSV as a table, and a diff, each opening in jalco-drop" />
+
+| Upload | Opens as |
+| --- | --- |
+| Code and text (about 70 languages) | Highlighted in your [code theme](/settings), with line links like `#L12` |
+| Markdown | A rendered document; frontmatter shows as a properties list |
+| HTML | The page, running in a sandboxed frame |
+| CSV and TSV | A table with sticky headers |
+| SVG | An image, rendered in a sandbox |
+| Images | A centred preview |
+| Video and audio | A player that seeks by byte range |
+| PDF | The browser's PDF viewer |
+| Zips and folders | A [share page](/file-types/folders) |
+| [Scrawl](https://scrawl.kitlangton.com) captures | A [recording page](/file-types/scrawl) |
+| [Superwhisper](https://superwhisper.com) recordings | A [transcript page](/file-types/superwhisper): audio on top, each line a timestamp that seeks it, speakers named |
+| Anything else | A download page |
+
+Markdown, HTML, CSV and SVG have a **Source** view at `?view=source`. Every drop's raw bytes are at `/<slug>/<filename>`, with `?download=1` to force a download. Raw HTML and SVG are always served as plain text or in a sandbox, so a drop can never run script on your domain.
+
+The `...` button in the top-right holds every action for a file. Right-click anywhere for the same actions as a pie menu.
+
+Every format lives in `src/formats/`, so you can [add your own](/file-types/custom).
