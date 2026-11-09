@@ -40,6 +40,8 @@ Environment (overrides the saved login):
 USAGE
 }
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then usage; exit; fi
+
 config="${XDG_CONFIG_HOME:-$HOME/.config}/jalco-drop/config"
 saved() { if [[ -f "$config" ]]; then sed -n "s/^$1=//p" "$config" | head -1; fi; }
 
