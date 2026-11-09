@@ -1,9 +1,10 @@
 import { scrawl } from "./scrawl";
 import { superwhisper } from "./superwhisper";
+import { json, jsonLines } from "./data";
 import { html, markdown, svg, table } from "./text";
 import type { BundleFormat, TextFormat } from "./types";
 
-export const TEXT_FORMATS: TextFormat[] = [markdown, table, html, svg];
+export const TEXT_FORMATS: TextFormat[] = [markdown, table, html, svg, json, jsonLines];
 
 export const BUNDLE_FORMATS: BundleFormat[] = [scrawl, superwhisper];
 

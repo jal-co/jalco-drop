@@ -7,7 +7,7 @@ export type TextView = { body: ReactNode; mono?: boolean };
 export type TextFormat = {
   id: string;
   test: (name: string) => boolean;
-  render: (text: string, context: { name: string; renderHref: string; surface: "page" | "drawer" }) => TextView | Promise<TextView>;
+  render: (text: string, context: { name: string; renderHref: string; surface: "page" | "drawer" }) => TextView | null | Promise<TextView | null>;
 };
 
 export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };

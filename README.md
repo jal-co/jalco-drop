@@ -82,7 +82,7 @@ jalco-drop -l
 jalco-drop -d my-skill
 ```
 
-Folders are zipped before upload. A `.scrawl` capture uploads only its video with the narration merged in (needs `ffmpeg`), its frames, contact sheet and a trimmed `scrawl.json` without the window list or cursor track, and expires after 30 days unless `-e` is set.
+Folders are zipped before upload. A `.scrawl` capture uploads only its video with the narration merged in (needs `ffmpeg`), its frames, contact sheet and a trimmed `scrawl.json` without the window list or cursor track, and expires after 30 days unless `-e` is set. A Claude Code or Pi session (`.jsonl`) uploads only its prompts, replies and a one-line summary of each tool call, without thinking or tool output.
 
 ## HTTP API
 

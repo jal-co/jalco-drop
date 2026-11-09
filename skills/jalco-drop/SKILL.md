@@ -1,6 +1,6 @@
 ---
 name: jalco-drop
-description: Send files, folders, pasted text, Scrawl captures and Superwhisper notes through the user's own jalco-drop site and hand back a link, or read a jalco-drop link someone sent. Use when the user asks to upload, share, drop, host or send a link to a file, log, diff, snippet, folder or recording, says "drop it" or "give me a link", or pastes a link from a jalco-drop site. Also covers listing and deleting drops. For deploying a site or creating tokens, use jalco-drop-setup.
+description: Send files, folders, pasted text, Scrawl captures, Superwhisper notes and Claude Code or Pi sessions through the user's own jalco-drop site and hand back a link, or read a jalco-drop link someone sent. Use when the user asks to upload, share, drop, host or send a link to a file, log, diff, snippet, folder or recording, says "drop it" or "give me a link", or pastes a link from a jalco-drop site. Also covers listing and deleting drops. For deploying a site or creating tokens, use jalco-drop-setup.
 ---
 
 # jalco-drop
@@ -49,6 +49,8 @@ A `401` means the drop has a password. Ask the user for it and send it as an `X-
    - A folder: pass the directory. The CLI zips it and skips `.git`, `node_modules` and `.DS_Store`.
    - A Scrawl capture: pass the `.scrawl` folder. The CLI merges the narration with `ffmpeg`, drops the cursor track and window list, and expires it after 30 days.
    - A Superwhisper recording: pass the folder from `~/superwhisper/recordings/`. The CLI converts the audio and keeps only the transcript, leaving the prompt and app context behind.
+   - A Claude Code or Pi session: pass the `.jsonl` file. The CLI keeps the prompts, replies and one line per tool call, and drops thinking and tool output. Prompts and tool commands still upload as written, so scan them for secrets first.
+   - Command output with colours: run the command with `FORCE_COLOR=1` and pipe it in with `-n <name>.log`, so the page keeps its colours.
    - Generated text, a diff or command output: pipe it on stdin with `-n` and a real extension, such as `-n fix.diff`. The extension picks the highlighting.
 2. Scan it for secrets (see the constraints).
 3. Pick who can open it.

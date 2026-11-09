@@ -7,7 +7,7 @@ sidebar:
 
 Every way a drop can open lives in `src/formats/`. There are two kinds.
 
-**Text formats** turn one file into a view, chosen by file name. Markdown, CSV/TSV, HTML and SVG are text formats in `src/formats/text.tsx`; anything else that's text falls back to highlighted code. The **Source** action appears for every text format.
+**Text formats** turn one file into a view, chosen by file name. Markdown, CSV/TSV, HTML and SVG are text formats in `src/formats/text.tsx`, and JSON, JSON Lines and agent sessions are in `src/formats/data.tsx`; anything else that's text falls back to highlighted code. A format's `render` can return `null` when the file isn't what it expected, such as JSON that doesn't parse, and the file opens as highlighted code instead. The **Source** action appears for every text format.
 
 ```tsx
 export const changelog: TextFormat = {

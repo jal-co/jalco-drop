@@ -1,0 +1,5 @@
+{"type":"user","sessionId":"abc","cwd":"/tmp","message":{"role":"user","content":"Share the build logs with Jeff"}}
+{"type":"assistant","sessionId":"abc","message":{"role":"assistant","model":"claude-sonnet-5-5","content":[{"type":"thinking","thinking":"hidden thought"},{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"jalco-drop -e 7d ./build-logs","description":"Upload logs"}}]}}
+{"type":"user","sessionId":"abc","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"https://drop.example.com/abc","is_error":false}]}}
+{"type":"user","sessionId":"abc","isSidechain":true,"message":{"role":"user","content":"subagent prompt"}}
+{"type":"assistant","sessionId":"abc","message":{"role":"assistant","model":"claude-sonnet-5-5","content":[{"type":"text","text":"Sent. Here's the link."}]}}

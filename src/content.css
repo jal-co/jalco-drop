@@ -792,3 +792,200 @@
   display: block;
   mask-image: linear-gradient(to right, #000 85%, transparent);
 }
+
+.json-tree {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 5.5rem 1.5rem 8rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  list-style: none;
+}
+
+.drawer-body .json-tree {
+  padding: 1.25rem 1.25rem 4rem;
+}
+
+.json-tree ul {
+  margin: 0 0 0 0.4375rem;
+  padding-left: 1.125rem;
+  border-left: 1px solid var(--border);
+  list-style: none;
+}
+
+.json-tree li {
+  overflow-wrap: anywhere;
+}
+
+.json-tree .json-leaf {
+  padding-left: 1.125rem;
+}
+
+.json-tree summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  width: fit-content;
+  padding-right: 0.5rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.json-tree summary::-webkit-details-marker {
+  display: none;
+}
+
+.json-tree summary::before {
+  content: "";
+  flex: none;
+  align-self: center;
+  width: 0.75rem;
+  height: 0.75rem;
+  background: var(--muted-foreground);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 4l4 4-4 4' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: rotate 150ms var(--ease-out-quart);
+}
+
+.json-tree details[open] > summary::before {
+  rotate: 90deg;
+}
+
+.json-tree summary:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .json-tree summary:hover {
+    background: color-mix(in oklab, var(--foreground) 6%, transparent);
+  }
+}
+
+.json-tree details[open] > summary :is(.json-count, .json-close) {
+  display: none;
+}
+
+.json-key {
+  color: oklch(0.78 0.08 250);
+}
+
+.json-key::after {
+  content: ":";
+  margin-right: 0.5rem;
+  color: var(--muted-foreground);
+}
+
+.json-string {
+  color: oklch(0.8 0.12 150);
+}
+
+.json-number,
+.json-boolean {
+  color: oklch(0.8 0.13 70);
+}
+
+.json-null,
+.json-punctuation,
+.json-count {
+  color: var(--muted-foreground);
+}
+
+.json-count {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+}
+
+.session-header {
+  margin-bottom: 2.5rem;
+}
+
+.prose .session-agent {
+  margin: 0;
+  color: oklch(0.97 0 0);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.prose .session-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1rem;
+  margin: 0.25rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.session-user {
+  margin: 2.5rem 0 1.25rem;
+  padding: 0.875rem 1.125rem;
+  border-radius: 1rem;
+  background: var(--card);
+  box-shadow: var(--shadow-raised);
+  color: oklch(0.95 0 0);
+}
+
+.session-user:first-of-type {
+  margin-top: 0;
+}
+
+.prose .session-user p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.session-assistant > :last-child {
+  margin-bottom: 0;
+}
+
+.prose .session-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prose .session-tools li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  min-width: 0;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.prose .session-tools li::marker {
+  content: none;
+}
+
+.session-tool-name {
+  flex: none;
+  color: oklch(0.85 0 0);
+  font-weight: 500;
+}
+
+.session-tool-summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-tool-failed {
+  flex: none;
+  color: var(--destructive);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .json-tree summary::before {
+    transition: none;
+  }
+}

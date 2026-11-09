@@ -1,0 +1,5 @@
+{"type":"session","version":3,"id":"s1","timestamp":"2026-11-09T20:00:00Z","cwd":"/Users/someone/private-project"}
+{"type":"message","id":"m1","message":{"role":"user","content":[{"type":"text","text":"Why did the worker build fail?<system-reminder>internal note</system-reminder>"}]}}
+{"type":"message","id":"m2","message":{"role":"assistant","model":"claude-opus-5-5","usage":{"input":10},"content":[{"type":"thinking","thinking":"secret reasoning SHOULD-NOT-UPLOAD"},{"type":"toolCall","id":"c1","name":"bash","arguments":{"command":"npm run deploy\necho second line","timeout":60}}]}}
+{"type":"message","id":"m3","message":{"role":"toolResult","toolCallId":"c1","toolName":"bash","isError":true,"content":[{"type":"text","text":"TOOL-OUTPUT-SHOULD-NOT-UPLOAD"}]}}
+{"type":"message","id":"m4","message":{"role":"assistant","model":"claude-opus-5-5","content":[{"type":"text","text":"It can't resolve **node:crypto** in `src/sign.ts`."}]}}

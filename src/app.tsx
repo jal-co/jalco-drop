@@ -331,8 +331,9 @@ async function serveRaw(env: Env, object: ObjectInfo, request: Request, download
 async function textPreview(drop: Drop, text: string, source: boolean): Promise<Preview> {
   const { lines } = describeText(drop.name, text);
   const format = textFormatFor(drop.name);
-  if (format && !source) return { kind: "rendered", lines, ...(await format.render(text, { name: drop.name, renderHref: `/${drop.slug}/${encodeURIComponent(drop.name)}?render=1`, surface: "page" })) };
-  return { kind: "code", html: (await highlight(drop.name, text)).html, lines, renderable: Boolean(format) };
+  const view = format && !source ? await format.render(text, { name: drop.name, renderHref: `/${drop.slug}/${encodeURIComponent(drop.name)}?render=1`, surface: "page" }) : null;
+  if (view) return { kind: "rendered", lines, ...view };
+  return { kind: "code", html: (await highlight(drop.name, text)).html, lines, renderable: Boolean(format) && source };
 }
 
 async function serveDrop(env: Env, object: ObjectInfo, origin: string, source: boolean) {
@@ -500,7 +501,8 @@ async function entryPreview(env: Env, object: ObjectInfo, entry: ZipEntry): Prom
   if (!format && !isTextName(entry.path) && extension) return { kind: "note", text: "No preview for this file." };
   if (entry.size > TEXT_PREVIEW_BYTES) return { kind: "note", text: "This file is too large to preview." };
   const text = await new Response(await openEntry(env.DROPS, object.key, entry)).text();
-  if (format) return { kind: "rendered", body: (await format.render(text, { name: entry.path.split("/").pop() ?? entry.path, renderHref: `${rawHref}&render=1`, surface: "drawer" })).body };
+  const view = format ? await format.render(text, { name: entry.path.split("/").pop() ?? entry.path, renderHref: `${rawHref}&render=1`, surface: "drawer" }) : null;
+  if (view) return { kind: "rendered", body: view.body };
   return { kind: "code", html: (await highlight(entry.path, text)).html };
 }
 

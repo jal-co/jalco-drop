@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { unique, upload, open } from "./helpers";
+import { readFileSync } from "node:fs";
+import { cli, fixture, unique, upload, open } from "./helpers";
 
 test("code is highlighted with line links", async ({ page, request }) => {
   const slug = await upload(request, "const a = 1;\nconst b = 2;\nconst c = 3;\n", { name: "lines.ts" });
@@ -90,4 +91,59 @@ test("agents can mint a scoped token and check what it may do", async ({ request
   expect(whoami).toEqual({ name: "Agent", sender: "Claude", permissions: ["upload"] });
   expect((await request.post("/api/tokens", { headers: { authorization: `Bearer ${token}` }, multipart: { name: "x", permissions: "upload" } })).status()).toBe(401);
   expect((await request.get("/cli")).status()).toBe(200);
+});
+
+test("terminal colour codes render as colour", async ({ page, request }) => {
+  const slug = await upload(request, "\x1b[32m✓ passed\x1b[0m\n\x1b[31m✗ failed\x1b[0m\n", { name: "test.log" });
+  await open(page, `/${slug}`);
+  await expect(page.locator(".shiki")).toContainText("✗ failed");
+  await expect(page.locator(".shiki")).not.toContainText("[31m");
+  await expect(page.locator(".shiki .line > span", { hasText: "✗ failed" })).toHaveAttribute("style", /color/);
+});
+
+test("json opens as a collapsible tree, and broken json as code", async ({ page, request }) => {
+  const slug = await upload(request, JSON.stringify({ name: "drop", nested: { deep: { deeper: true } } }), { name: "data.json", type: "application/json" });
+  await open(page, `/${slug}`);
+  await expect(page.locator(".json-tree")).toContainText("nested");
+  const deep = page.locator(".json-tree summary", { hasText: "deep" }).last();
+  await expect(page.locator(".json-tree .json-boolean")).toBeHidden();
+  await deep.click();
+  await expect(page.locator(".json-tree .json-boolean")).toHaveText("true");
+  await open(page, `/${slug}?view=source`);
+  await expect(page.locator(".shiki")).toContainText('"nested"');
+  const broken = await upload(request, "{ not json", { name: "broken.json", type: "application/json" });
+  await open(page, `/${broken}`);
+  await expect(page.locator(".shiki")).toContainText("{ not json");
+});
+
+test("jsonl opens as a table", async ({ page, request }) => {
+  const slug = await upload(request, '{"level":"info","msg":"start"}\n{"level":"error","msg":"boom","meta":{"retry":false}}\n', { name: "events.jsonl" });
+  await open(page, `/${slug}`);
+  await expect(page.getByRole("columnheader", { name: "meta" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "boom" })).toBeVisible();
+});
+
+test("a Claude Code session opens as a conversation", async ({ page, request }) => {
+  const slug = await upload(request, readFileSync(fixture("claude-code-session.jsonl")), { name: "session.jsonl" });
+  await open(page, `/${slug}`);
+  await expect(page.getByText("Claude Code session")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Prompt" })).toHaveText("Share the build logs with Jeff");
+  await expect(page.locator(".session-tools")).toContainText("jalco-drop -e 7d ./build-logs");
+  await expect(page.getByRole("region", { name: "Reply" })).toHaveText("Sent. Here's the link.");
+  await expect(page.locator("main")).not.toContainText("hidden thought");
+  await expect(page.locator("main")).not.toContainText("subagent prompt");
+});
+
+test("the CLI trims a Pi session before uploading it", async ({ page, request, baseURL }) => {
+  const slug = cli(baseURL!, [fixture("pi-session.jsonl")]);
+  const raw = await (await request.get(`/${slug}/pi-session.jsonl`)).text();
+  expect(raw).not.toContain("SHOULD-NOT-UPLOAD");
+  expect(raw).not.toContain("internal note");
+  expect(raw).not.toContain("private-project");
+  expect(raw).not.toContain("second line");
+  await open(page, `/${slug}`);
+  await expect(page.getByText("Pi session")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Prompt" })).toHaveText("Why did the worker build fail?");
+  await expect(page.locator(".session-tools li")).toHaveText("bash npm run deploy failed");
+  await expect(page.getByRole("region", { name: "Reply" }).locator("strong")).toHaveText("node:crypto");
 });

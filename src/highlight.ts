@@ -79,7 +79,7 @@ const EXTENSIONS = {
   htm: "html", svg: "xml", gql: "graphql", patch: "diff", mk: "make", makefile: "make", dockerfile: "dockerfile",
   cs: "csharp", ex: "elixir", exs: "elixir", erl: "erlang", hs: "haskell", sc: "scala", pl: "perl", ps1: "powershell",
   tf: "terraform", tfvars: "terraform", tex: "latex", ml: "ocaml", clj: "clojure", cljs: "clojure", jl: "julia", sol: "solidity",
-  m: "objective-c", fs: "fsharp", gradle: "groovy", kts: "kotlin", mm: "objective-c",
+  m: "objective-c", fs: "fsharp", gradle: "groovy", kts: "kotlin", mm: "objective-c", jsonl: "json", ndjson: "json",
 } satisfies Record<string, Language>;
 
 const EXTENSION_LANGUAGES = new Map<string, Language>(Object.entries(EXTENSIONS));
@@ -153,18 +153,23 @@ export async function highlightBlock(code: string, fence: string | undefined, th
 
 const titleFor = (language: Language | null) => language ? (TITLES[language] ?? language[0].toUpperCase() + language.slice(1)) : "Plain text";
 
+const ANSI_ESCAPE = /\x1b\[[\d;]*m/;
+
+export const hasTerminalColour = (text: string) => ANSI_ESCAPE.test(text);
+
 export function describeText(name: string, text: string) {
   const source = text.endsWith("\n") ? text.slice(0, -1) : text;
-  return { language: titleFor(languageFor(name)), lines: source.split("\n").length };
+  return { language: hasTerminalColour(source) ? "Terminal output" : titleFor(languageFor(name)), lines: source.split("\n").length };
 }
 
 export async function highlight(name: string, text: string): Promise<Highlighted> {
   const source = text.endsWith("\n") ? text.slice(0, -1) : text;
-  const language = languageFor(name);
+  const terminal = hasTerminalColour(source);
+  const language = terminal ? null : languageFor(name);
   const lineCount = source.split("\n").length;
   const shiki = await shikiFor(language);
   const html = shiki.codeToHtml(source, {
-    lang: language ?? "text",
+    lang: terminal ? "ansi" : (language ?? "text"),
     theme: site.codeTheme,
     transformers: [
       {
@@ -184,7 +189,7 @@ export async function highlight(name: string, text: string): Promise<Highlighted
       },
     ],
   });
-  return { html, language: titleFor(language), lines: lineCount };
+  return { html, language: terminal ? "Terminal output" : titleFor(language), lines: lineCount };
 }
 
 export const isCodeName = (name: string) => languageFor(name) !== null;
