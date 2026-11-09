@@ -1,6 +1,6 @@
 ---
 name: jalco-drop-setup
-description: Deploy a jalco-drop site on Cloudflare or Docker, sign the CLI in, and create scoped upload tokens for agents and bots. Use when the user wants their own file host or WeTransfer, says "set up jalco-drop", has no drop site yet, needs a token for an agent, CI job or bot, or when the jalco-drop skill finds no site or no token.
+description: Deploy a jalco-drop site on Cloudflare or Docker, sign the CLI in, and create scoped upload tokens for agents and bots. Use when the user wants their own file host or file transfer interface, says "set up jalco-drop", has no drop site yet, needs a token for an agent, CI job or bot, or when the jalco-drop skill finds no site or no token.
 ---
 
 # jalco-drop setup
