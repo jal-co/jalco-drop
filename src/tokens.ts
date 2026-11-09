@@ -1,3 +1,4 @@
+import type { Background, Store } from "./platform/store";
 export const PERMISSIONS = ["upload", "list", "delete"] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -28,15 +29,15 @@ async function hashToken(token: string) {
 const randomToken = () =>
   `jd_${btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(30)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
 
-async function readRecord(bucket: R2Bucket, id: string) {
+async function readRecord(bucket: Store, id: string) {
   const object = await bucket.get(tokenKey(id));
   return object ? object.json<TokenRecord>() : null;
 }
 
-const writeRecord = (bucket: R2Bucket, record: TokenRecord) =>
+const writeRecord = (bucket: Store, record: TokenRecord) =>
   bucket.put(tokenKey(record.id), JSON.stringify(record), { httpMetadata: { contentType: "application/json" } });
 
-export async function findToken(bucket: R2Bucket, token: string, context: ExecutionContext) {
+export async function findToken(bucket: Store, token: string, context: Background) {
   const record = await readRecord(bucket, await hashToken(token));
   if (!record) return null;
   if (!record.lastUsed || Date.now() - record.lastUsed > LAST_USED_RESOLUTION_MS) {
@@ -45,7 +46,7 @@ export async function findToken(bucket: R2Bucket, token: string, context: Execut
   return record;
 }
 
-export async function listTokens(bucket: R2Bucket) {
+export async function listTokens(bucket: Store) {
   const records: TokenRecord[] = [];
   let cursor: string | undefined;
   do {
@@ -59,7 +60,7 @@ export async function listTokens(bucket: R2Bucket) {
   return records.sort((a, b) => b.created - a.created);
 }
 
-export async function createToken(bucket: R2Bucket, input: { name: string; sender: string; permissions: Permission[]; avatar: File | null }) {
+export async function createToken(bucket: Store, input: { name: string; sender: string; permissions: Permission[]; avatar: File | null }) {
   const token = randomToken();
   const record: TokenRecord = { id: await hashToken(token), name: input.name, sender: input.sender, permissions: input.permissions, created: Date.now() };
   if (input.avatar) {
@@ -70,4 +71,4 @@ export async function createToken(bucket: R2Bucket, input: { name: string; sende
   return { token, record };
 }
 
-export const revokeToken = (bucket: R2Bucket, id: string) => bucket.delete(tokenKey(id));
+export const revokeToken = (bucket: Store, id: string) => bucket.delete(tokenKey(id));

@@ -25,7 +25,12 @@
     "wrangler.example.jsonc",
     "AGENTS.md",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "Dockerfile",
+    ".dockerignore",
+    ".env.example",
+    "docker-compose.example.yml",
+    "tsconfig.node.json"
   ],
   "engines": {
     "node": ">=22.18"
@@ -36,10 +41,13 @@
     "dev": "wrangler dev --host localhost:8787",
     "predeploy": "npm run build",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
     "pretest": "npm run build",
     "test": "bash test/smoke.sh",
-    "setup": "node scripts/setup.mjs"
+    "setup": "node scripts/setup.mjs",
+    "build:node": "npm run build && esbuild src/node.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/server.mjs --jsx=automatic --external:puppeteer-core --define:process.env.NODE_ENV='\"production\"' --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
+    "start": "node dist/server.mjs",
+    "test:node": "npm run build:node && SMOKE_TARGET=node bash test/smoke.sh"
   },
   "devDependencies": {
     "@base-ui/react": "^1.9.0",
@@ -50,13 +58,16 @@
     "@paper-design/shaders": "^0.0.82",
     "@pierre/theme": "^2.0.0",
     "@tailwindcss/cli": "^4.3.5",
+    "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "aws4fetch": "^1.0.20",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
     "esbuild": "^0.28.2",
     "lucide-react": "^1.70.0",
     "marked": "^18.1.3",
+    "puppeteer-core": "^25.16.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "shadcn": "^4.23.0",

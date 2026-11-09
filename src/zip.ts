@@ -1,3 +1,4 @@
+import type { Store } from "./platform/store";
 export type ZipEntry = {
   path: string;
   size: number;
@@ -15,13 +16,13 @@ const LOCAL_HEADER_BYTES = 30;
 const ZIP64_MARKER = 0xffffffff;
 const IGNORED = /(^|\/)(__MACOSX\/|\.DS_Store$)/;
 
-async function readRange(bucket: R2Bucket, key: string, offset: number, length: number) {
+async function readRange(bucket: Store, key: string, offset: number, length: number) {
   const object = await bucket.get(key, { range: { offset, length } });
   if (!object) throw new Error("Zip disappeared while reading");
   return new DataView(await object.arrayBuffer());
 }
 
-export async function listZip(bucket: R2Bucket, key: string, size: number): Promise<ZipEntry[] | null> {
+export async function listZip(bucket: Store, key: string, size: number): Promise<ZipEntry[] | null> {
   if (size < EOCD_MIN_BYTES) return null;
   const tailLength = Math.min(size, EOCD_MAX_BYTES);
   const tail = await readRange(bucket, key, size - tailLength, tailLength);
@@ -63,12 +64,12 @@ export async function listZip(bucket: R2Bucket, key: string, size: number): Prom
 
 export const canExtract = (entry: ZipEntry) => !entry.encrypted && (entry.method === 0 || entry.method === 8);
 
-async function dataStart(bucket: R2Bucket, key: string, entry: ZipEntry) {
+async function dataStart(bucket: Store, key: string, entry: ZipEntry) {
   const header = await readRange(bucket, key, entry.offset, LOCAL_HEADER_BYTES);
   return entry.offset + LOCAL_HEADER_BYTES + header.getUint16(26, true) + header.getUint16(28, true);
 }
 
-export async function openEntry(bucket: R2Bucket, key: string, entry: ZipEntry, range?: { start: number; end: number }) {
+export async function openEntry(bucket: Store, key: string, entry: ZipEntry, range?: { start: number; end: number }) {
   const start = await dataStart(bucket, key, entry);
   const window = range && entry.method === 0
     ? { offset: start + range.start, length: range.end - range.start + 1 }

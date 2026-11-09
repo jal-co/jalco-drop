@@ -15,7 +15,7 @@ export type Uploader = { id: string; name: string; avatar: boolean };
 export type Card = {
   url: string;
   description: string;
-  image: string;
+  image?: string;
   imageSize?: { width: number; height: number };
   video?: { url: string; type: string };
 };

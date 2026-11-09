@@ -1,3 +1,4 @@
+import type { Store } from "./platform/store";
 import { CODE_THEMES, type ConfigVars } from "./config";
 
 const SETTINGS_KEY = "config/settings.json";
@@ -6,7 +7,7 @@ const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 let cached: { at: number; value: Promise<ConfigVars> } | undefined;
 
-export function loadSettings(bucket: R2Bucket) {
+export function loadSettings(bucket: Store) {
   if (!cached || Date.now() - cached.at > CACHE_MS) {
     const value = bucket.get(SETTINGS_KEY).then((object) => (object ? object.json<ConfigVars>() : {}));
     cached = { at: Date.now(), value };
@@ -25,12 +26,12 @@ export function validateSettings(form: FormData): { vars: Required<ConfigVars> }
   return { vars };
 }
 
-export async function saveSettings(bucket: R2Bucket, vars: ConfigVars) {
+export async function saveSettings(bucket: Store, vars: ConfigVars) {
   await bucket.put(SETTINGS_KEY, JSON.stringify(vars), { httpMetadata: { contentType: "application/json" } });
   cached = undefined;
 }
 
-export async function resetSettings(bucket: R2Bucket) {
+export async function resetSettings(bucket: Store) {
   await bucket.delete(SETTINGS_KEY);
   cached = undefined;
 }

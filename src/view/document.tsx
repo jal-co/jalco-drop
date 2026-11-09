@@ -9,7 +9,7 @@ function CardTags({ title, card }: { title: string; card: Card }) {
       <meta property="og:title" content={title} />
       <meta property="og:description" content={card.description} />
       <meta property="og:url" content={card.url} />
-      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:card" content={card.image ? "summary_large_image" : "summary"} />
       <meta property="og:type" content={card.video ? "video.other" : "website"} />
       {card.video && (
         <>
@@ -18,7 +18,7 @@ function CardTags({ title, card }: { title: string; card: Card }) {
           <meta property="og:video:type" content={card.video.type} />
         </>
       )}
-      <meta property="og:image" content={card.image} />
+      {card.image && <meta property="og:image" content={card.image} />}
       {card.imageSize && (
         <>
           <meta property="og:image:width" content={String(card.imageSize.width)} />

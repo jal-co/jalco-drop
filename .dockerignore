@@ -1,0 +1,10 @@
+node_modules
+.wrangler
+.dev.vars
+dist
+data
+public/js
+public/style.css
+public/grain.js
+wrangler.jsonc
+.git

@@ -1,3 +1,4 @@
+import type { Background, ObjectInfo, RateLimiter, Store } from "./platform/store";
 import { checkPassword, cookie, equalStrings, hashPassword, readCookie, sign, verify } from "./auth";
 import { describeText, highlight, highlightBlock, isCodeName } from "./highlight";
 import { parseDelimited } from "./table";
@@ -20,13 +21,14 @@ import { loadSettings, resetSettings, saveSettings, validateSettings } from "./s
 import { site } from "./view/site";
 import type { Card, Drop, Scrawl } from "./view/types";
 import puppeteer from "@cloudflare/puppeteer";
+import { CARD_HEIGHT, CARD_WIDTH, captureCard } from "./platform/card-browser";
 
-type Env = {
-  DROPS: R2Bucket;
-  ASSETS: Fetcher;
+export type Env = {
+  DROPS: Store;
   ADMIN_TOKEN: string;
-  REQUEST_LIMITER: RateLimit;
-  BROWSER: Fetcher;
+  REQUEST_LIMITER: RateLimiter;
+  BROWSER?: Parameters<typeof puppeteer.launch>[0];
+  RENDER_CARD?: (url: string) => Promise<Uint8Array<ArrayBuffer>>;
   SITE_NAME?: string;
   OWNER_NAME?: string;
   ACCENT_COLOR?: string;
@@ -109,7 +111,7 @@ async function claimSlug(env: Env, requested: string | null) {
   }
 }
 
-function toDrop(object: R2Object): Drop {
+function toDrop(object: ObjectInfo): Drop {
   const meta = object.customMetadata ?? {};
   return {
     slug: object.key,
@@ -124,11 +126,11 @@ function toDrop(object: R2Object): Drop {
   };
 }
 
-const isExpired = (object: R2Object) => Boolean(object.customMetadata?.expires) && Number(object.customMetadata!.expires) <= Date.now();
+const isExpired = (object: ObjectInfo) => Boolean(object.customMetadata?.expires) && Number(object.customMetadata!.expires) <= Date.now();
 
 const bearerOf = (request: Request) => request.headers.get("authorization")?.match(/^Bearer (.+)$/)?.[1];
 
-async function apiToken(request: Request, env: Env, context: ExecutionContext) {
+async function apiToken(request: Request, env: Env, context: Background) {
   const bearer = bearerOf(request);
   return bearer && !equalStrings(bearer, env.ADMIN_TOKEN) ? findToken(env.DROPS, bearer, context) : null;
 }
@@ -146,9 +148,9 @@ async function isAdmin(request: Request, env: Env) {
 }
 
 const unlockCookieName = (slug: string) => `jalco_unlock_${slug.replace(/[^a-z0-9_-]/g, "_")}`;
-const unlockValue = (object: R2Object) => `unlock:${object.key}:${object.uploaded.getTime()}`;
+const unlockValue = (object: ObjectInfo) => `unlock:${object.key}:${object.uploaded.getTime()}`;
 
-async function isUnlocked(request: Request, env: Env, object: R2Object) {
+async function isUnlocked(request: Request, env: Env, object: ObjectInfo) {
   if (!object.customMetadata?.password) return true;
   const token = readCookie(request, unlockCookieName(object.key));
   return Boolean(token) && (await verify(env.ADMIN_TOKEN, token!)) === unlockValue(object);
@@ -201,10 +203,7 @@ async function createFromBody(request: Request, env: Env, url: URL, uploader: To
   });
 }
 
-const CARD_WIDTH = 1200;
-const CARD_HEIGHT = 630;
 const CARD_FRAME_SECONDS = 60;
-const CARD_PAINT_TIMEOUT_MS = 15_000;
 const CARD_VERSION = "2";
 const THEME_SAMPLE = `function share(file) {
   const link = drop(file, "7d");
@@ -262,7 +261,7 @@ function mediaOf(name: string, type = "") {
 const dropHref = (origin: string, drop: Drop) => `${origin}/${drop.slug}`;
 const rawUrl = (origin: string, drop: Drop) => `${dropHref(origin, drop)}/${encodeURIComponent(drop.name)}`;
 
-async function serveMedia(env: Env, object: R2Object, media: { kind: MediaKind; type: string }, request: Request) {
+async function serveMedia(env: Env, object: ObjectInfo, media: { kind: MediaKind; type: string }, request: Request) {
   const range = parseRange(request.headers.get("range"), object.size);
   if (range === null) return new Response(null, { status: 416, headers: { "content-range": `bytes */${object.size}` } });
   const body = await env.DROPS.get(object.key, range ? { range: { offset: range.start, length: range.end - range.start + 1 } } : {});
@@ -281,7 +280,7 @@ async function serveMedia(env: Env, object: R2Object, media: { kind: MediaKind; 
   return new Response(body.body, { status: range ? 206 : 200, headers });
 }
 
-async function serveRaw(env: Env, object: R2Object, request: Request, download: boolean, render: boolean) {
+async function serveRaw(env: Env, object: ObjectInfo, request: Request, download: boolean, render: boolean) {
   const media = download ? undefined : mediaOf(toDrop(object).name, toDrop(object).type);
   if (media) return serveMedia(env, object, media, request);
   const body = await env.DROPS.get(object.key);
@@ -331,7 +330,7 @@ async function textPreview(drop: Drop, text: string, source: boolean): Promise<P
   return { kind: "code", html: (await highlight(drop.name, text)).html, lines, renderable };
 }
 
-async function serveDrop(env: Env, object: R2Object, origin: string, source: boolean) {
+async function serveDrop(env: Env, object: ObjectInfo, origin: string, source: boolean) {
   const drop = toDrop(object);
   const card = await cardFor(env, object, origin);
   const media = mediaOf(drop.name, drop.type);
@@ -352,19 +351,19 @@ async function serveDrop(env: Env, object: R2Object, origin: string, source: boo
 const isZip = (drop: Drop) => ZIP_NAME.test(drop.name) || drop.type === "application/zip";
 const extensionOf = (path: string) => (path.includes(".") ? path.slice(path.lastIndexOf(".") + 1).toLowerCase() : "");
 
-async function seedFor(object: R2Object) {
+async function seedFor(object: ObjectInfo) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(object.etag));
   return Array.from(new Uint8Array(digest).slice(0, 8), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-async function findEntry(env: Env, object: R2Object, path: string | null) {
+async function findEntry(env: Env, object: ObjectInfo, path: string | null) {
   const entries = await listZip(env.DROPS, object.key, object.size);
   const entry = entries?.find((candidate) => candidate.path === path);
   if (!entry) throw new HttpError(404, "That file is not in this drop.");
   return entry;
 }
 
-async function readScrawl(env: Env, object: R2Object, entries: ZipEntry[]): Promise<{ root: string; scrawl: Scrawl } | null> {
+async function readScrawl(env: Env, object: ObjectInfo, entries: ZipEntry[]): Promise<{ root: string; scrawl: Scrawl } | null> {
   const manifest = entries.find((entry) => /^[^/]+\/scrawl\.json$/.test(entry.path) && canExtract(entry) && entry.size <= TEXT_PREVIEW_BYTES);
   if (!manifest) return null;
   const root = manifest.path.slice(0, -"scrawl.json".length);
@@ -380,7 +379,7 @@ async function readScrawl(env: Env, object: R2Object, entries: ZipEntry[]): Prom
 
 type Summary = { title: string; details: string[] };
 
-async function summarize(env: Env, object: R2Object): Promise<Summary> {
+async function summarize(env: Env, object: ObjectInfo): Promise<Summary> {
   const drop = toDrop(object);
   const size = formatSize(drop.size);
   if (isZip(drop)) {
@@ -405,51 +404,46 @@ async function summarize(env: Env, object: R2Object): Promise<Summary> {
   return { title: drop.name, details: [mediaOf(drop.name, drop.type) ? label : extension ? extension.toUpperCase() : "File", size] };
 }
 
-const cardHref = (origin: string, object: R2Object) => `${origin}/${object.key}?card=${cardVersion()}-${object.etag.slice(0, 12)}`;
+const cardHref = (origin: string, object: ObjectInfo) => `${origin}/${object.key}?card=${cardVersion()}-${object.etag.slice(0, 12)}`;
 
-async function cardFor(env: Env, object: R2Object, origin: string): Promise<Card> {
+const cardsEnabled = (env: Env) => Boolean(env.RENDER_CARD || env.BROWSER);
+
+async function cardFor(env: Env, object: ObjectInfo, origin: string): Promise<Card> {
   const summary = await summarize(env, object);
   return {
     url: dropHref(origin, toDrop(object)),
     description: `${senderOf(toDrop(object))} sent you ${summary.title}. ${summary.details.join(", ")}.`,
-    image: cardHref(origin, object),
-    imageSize: { width: CARD_WIDTH, height: CARD_HEIGHT },
+    image: cardsEnabled(env) ? cardHref(origin, object) : undefined,
+    imageSize: cardsEnabled(env) ? { width: CARD_WIDTH, height: CARD_HEIGHT } : undefined,
   };
 }
 
-const cardFrameValue = (object: R2Object, until: number) => `card:${object.key}:${object.etag}:${until}`;
+const cardFrameValue = (object: ObjectInfo, until: number) => `card:${object.key}:${object.etag}:${until}`;
 
-async function renderCardImage(env: Env, object: R2Object, origin: string) {
+async function renderCardImage(env: Env, object: ObjectInfo, origin: string) {
   const until = Date.now() + CARD_FRAME_SECONDS * 1000;
   const token = await sign(env.ADMIN_TOKEN, cardFrameValue(object, until));
-  const browser = await puppeteer.launch(env.BROWSER);
-  try {
-    const tab = await browser.newPage();
-    await tab.setViewport({ width: CARD_WIDTH, height: CARD_HEIGHT, deviceScaleFactor: 1 });
-    await tab.goto(`${origin}/${object.key}?card-frame=${encodeURIComponent(token)}&until=${until}`, { waitUntil: "load" });
-    await tab.waitForSelector("html[data-painted]", { timeout: CARD_PAINT_TIMEOUT_MS });
-    await tab.evaluate("document.fonts.ready");
-    return await tab.screenshot({ type: "png" });
-  } finally {
-    await browser.close();
-  }
+  const url = `${origin}/${object.key}?card-frame=${encodeURIComponent(token)}&until=${until}`;
+  if (env.RENDER_CARD) return env.RENDER_CARD(url);
+  if (!env.BROWSER) throw new Error("No card renderer is configured.");
+  return captureCard(await puppeteer.launch(env.BROWSER), url);
 }
 
-async function ensureCard(env: Env, object: R2Object, origin: string) {
+async function ensureCard(env: Env, object: ObjectInfo, origin: string) {
   const stored = await env.DROPS.get(cardKey(object.key));
   if (stored?.customMetadata?.etag === object.etag && stored.customMetadata.version === cardVersion()) return stored.body;
-  const png = new Uint8Array(await renderCardImage(env, object, origin));
+  const png = await renderCardImage(env, object, origin);
   await env.DROPS.put(cardKey(object.key), png, { httpMetadata: { contentType: "image/png" }, customMetadata: { etag: object.etag, version: cardVersion() } });
   return png;
 }
 
-async function serveCard(env: Env, object: R2Object, origin: string) {
+async function serveCard(env: Env, object: ObjectInfo, origin: string) {
   return new Response(await ensureCard(env, object, origin), {
     headers: { "content-type": "image/png", "cache-control": "public, max-age=31536000, immutable", "x-robots-tag": "noindex" },
   });
 }
 
-async function serveCardFrame(env: Env, object: R2Object, url: URL) {
+async function serveCardFrame(env: Env, object: ObjectInfo, url: URL) {
   const token = url.searchParams.get("card-frame") ?? "";
   const until = Number(url.searchParams.get("until"));
   if (!(until > Date.now()) || (await verify(env.ADMIN_TOKEN, token)) !== cardFrameValue(object, until)) throw new HttpError(401, "This card link expired.");
@@ -457,7 +451,7 @@ async function serveCardFrame(env: Env, object: R2Object, url: URL) {
   return respond(<CardPage sender={senderOf(toDrop(object))} title={summary.title} details={summary.details} seed={seed} />);
 }
 
-async function serveShare(env: Env, object: R2Object, origin: string) {
+async function serveShare(env: Env, object: ObjectInfo, origin: string) {
   const drop = toDrop(object);
   const [entries, card] = await Promise.all([listZip(env.DROPS, object.key, object.size), cardFor(env, object, origin)]);
   if (!entries) return respond(<DropPage drop={drop} preview={{ kind: "file" }} origin={origin} card={card} />);
@@ -470,7 +464,7 @@ async function serveShare(env: Env, object: R2Object, origin: string) {
   return respond(<SharePage drop={drop} sender={senderOf(drop)} entries={entries} seed={await seedFor(object)} card={card} />);
 }
 
-async function entryPreview(env: Env, object: R2Object, entry: ZipEntry): Promise<EntryPreviewData> {
+async function entryPreview(env: Env, object: ObjectInfo, entry: ZipEntry): Promise<EntryPreviewData> {
   const rawHref = `/${object.key}/${encodeURIComponent(toDrop(object).name)}?entry=${encodeURIComponent(entry.path)}`;
   const extension = extensionOf(entry.path);
   if (!canExtract(entry)) return { kind: "note", text: "This file is encrypted or uses a compression method the preview cannot read. Download the zip to open it." };
@@ -486,7 +480,7 @@ async function entryPreview(env: Env, object: R2Object, entry: ZipEntry): Promis
   return MARKDOWN_NAME.test(entry.path) ? { kind: "markdown", html: await renderMarkdown(text) } : { kind: "code", html: (await highlight(entry.path, text)).html };
 }
 
-async function serveEntryPreview(env: Env, object: R2Object, entry: ZipEntry) {
+async function serveEntryPreview(env: Env, object: ObjectInfo, entry: ZipEntry) {
   return fragment(<EntryPreview preview={await entryPreview(env, object, entry)} />);
 }
 
@@ -498,7 +492,7 @@ function parseRange(header: string | null, size: number) {
   return start <= end && start < size ? { start, end } : null;
 }
 
-async function serveEntryRaw(env: Env, object: R2Object, entry: ZipEntry, request: Request, download: boolean, render: boolean) {
+async function serveEntryRaw(env: Env, object: ObjectInfo, entry: ZipEntry, request: Request, download: boolean, render: boolean) {
   if (!canExtract(entry)) throw new HttpError(415, "This file cannot be extracted. Download the zip instead.");
   const name = entry.path.split("/").pop()!;
   const extension = extensionOf(name);
@@ -538,7 +532,7 @@ async function adminPage(env: Env, url: URL, state: Partial<Pick<AdminProps, "ta
   return respond(<AdminPage {...state} saved={state.saved ?? url.searchParams.has("saved")} tab={tab} drops={adminDrops} tokens={tokens} settings={settings} origin={url.origin} />, status);
 }
 
-async function route(request: Request, env: Env, context: ExecutionContext) {
+async function route(request: Request, env: Env, context: Background) {
   if (!env.ADMIN_TOKEN) throw new HttpError(503, "ADMIN_TOKEN is not set.");
   const url = new URL(request.url);
   const { pathname } = url;
@@ -636,7 +630,7 @@ async function route(request: Request, env: Env, context: ExecutionContext) {
     try {
       const slug = fromForm ? await createFromForm(request, env) : await createFromBody(request, env, url, token);
       const stored = await env.DROPS.head(slug);
-      if (stored && !stored.customMetadata?.password) context.waitUntil(ensureCard(env, stored, url.origin).catch((error) => console.error(`Card render failed for ${slug}`, error)));
+      if (stored && !stored.customMetadata?.password && cardsEnabled(env)) context.waitUntil(ensureCard(env, stored, url.origin).catch((error) => console.error(`Card render failed for ${slug}`, error)));
       return fromForm && !request.headers.get("authorization") ? redirect(`/admin?created=${encodeURIComponent(slug)}`) : Response.json({ slug, url: `${url.origin}/${slug}` }, { status: 201 });
     } catch (error) {
       if (fromForm && error instanceof HttpError && !request.headers.get("authorization")) return redirect(`/admin?error=${encodeURIComponent(error.message)}`);
@@ -688,19 +682,18 @@ async function route(request: Request, env: Env, context: ExecutionContext) {
   return respond(<NotFoundPage />, 404);
 }
 
-export default {
-  async fetch(request, env, context) {
-    Object.assign(site, readConfig({ ...env, ...(await loadSettings(env.DROPS)) }), { host: new URL(request.url).host });
-    try {
-      return await route(request, env, context);
-    } catch (error) {
-      if (!(error instanceof HttpError)) throw error;
-      return request.headers.get("accept")?.includes("text/html")
-        ? respond(<ErrorPage message={error.message} />, error.status)
-        : Response.json({ error: error.message }, { status: error.status });
-    }
-  },
-  async scheduled(_controller, env) {
-    await listDrops(env);
-  },
-} satisfies ExportedHandler<Env>;
+export async function handleRequest(request: Request, env: Env, context: Background) {
+  Object.assign(site, readConfig({ ...env, ...(await loadSettings(env.DROPS)) }), { host: new URL(request.url).host });
+  try {
+    return await route(request, env, context);
+  } catch (error) {
+    if (!(error instanceof HttpError)) throw error;
+    return request.headers.get("accept")?.includes("text/html")
+      ? respond(<ErrorPage message={error.message} />, error.status)
+      : Response.json({ error: error.message }, { status: error.status });
+  }
+}
+
+export async function runScheduled(env: Env) {
+  await listDrops(env);
+}

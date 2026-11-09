@@ -5,3 +5,7 @@ public/grain.js
 public/style.css
 public/js/
 wrangler.jsonc
+dist/
+.env
+docker-compose.yml
+data/

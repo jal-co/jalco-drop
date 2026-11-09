@@ -10,7 +10,12 @@ export JALCO_DROP_TOKEN="smoke-token"
 config=wrangler.jsonc
 [[ -f "$config" ]] || config=wrangler.example.jsonc
 
-npx wrangler dev --config "$config" --test-scheduled --port "$port" --host "localhost:$port" --var "ADMIN_TOKEN:$JALCO_DROP_TOKEN" --persist-to "$work/state" >"$work/wrangler.log" 2>&1 &
+target="${SMOKE_TARGET:-worker}"
+if [[ "$target" == node ]]; then
+  CHROME_PATH="${CHROME_PATH:-}" ADMIN_TOKEN="$JALCO_DROP_TOKEN" PORT="$port" DATA_DIR="$work/data" TEST_SCHEDULED=on OWNER_NAME="$(jq -r '.vars.OWNER_NAME' "$config")" CODE_THEME="$(jq -r '.vars.CODE_THEME' "$config")" node dist/server.mjs >"$work/wrangler.log" 2>&1 &
+else
+  npx wrangler dev --config "$config" --test-scheduled --port "$port" --host "localhost:$port" --var "ADMIN_TOKEN:$JALCO_DROP_TOKEN" --persist-to "$work/state" >"$work/wrangler.log" 2>&1 &
+fi
 server=$!
 trap 'kill $server 2>/dev/null; wait $server 2>/dev/null; rm -rf "$work"' EXIT
 
@@ -127,7 +132,11 @@ check "expired drop is gone" 404 "$(status "$expired_url")"
 printf 'old\n' | bin/jalco-drop -e 0h -s reused >/dev/null 2>&1
 check "expired slug can be reused" "$JALCO_DROP_URL/reused" "$(printf 'new\n' | bin/jalco-drop -s reused 2>/dev/null)"
 printf 'swept\n' | bin/jalco-drop -e 0h -s swept >/dev/null 2>&1
-stored() { sqlite3 "$(ls "$work"/state/v3/r2/miniflare-R2BucketObject/*.sqlite | grep -v metadata)" "select count(*) from _mf_objects where key = '$1'"; }
+stored() {
+  if [[ "${STORAGE:-disk}" == s3 ]]; then curl -s "$S3_ENDPOINT/$S3_BUCKET?list-type=2&prefix=$1" | grep -o "<Key>$1</Key>" | grep -c . || true
+  elif [[ "$target" == node ]]; then ls "$work/data" | grep -cx "$1" || true
+  else sqlite3 "$(ls "$work"/state/v3/r2/miniflare-R2BucketObject/*.sqlite | grep -v metadata)" "select count(*) from _mf_objects where key = '$1'"; fi
+}
 check "expired drop waits for cleanup" 1 "$(stored swept)"
 curl -s "$JALCO_DROP_URL/__scheduled?cron=0+*+*+*+*" >/dev/null
 check "hourly cleanup deletes expired drops" 0 "$(stored swept)"
@@ -178,8 +187,10 @@ bot_id="$(curl -s -b "$work/admin" "$JALCO_DROP_URL/admin?tab=tokens" | grep -o 
 check "revoking a token" 303 "$(status -b "$work/admin" -H "Origin: $JALCO_DROP_URL" -X POST "$JALCO_DROP_URL/admin/tokens/$bot_id/revoke")"
 check "a revoked token cannot upload" 401 "$(printf x | curl -s -o /dev/null -w '%{http_code}' -X POST -H "Authorization: Bearer $bot_token" --data-binary @- "$JALCO_DROP_URL/api/items?name=x.txt")"
 check "drops keep their sender after revoke" yes "$(curl -s "$bot_zip_url" | contains '>Justin’s Grokbot</span>')"
+if [[ "$target" == worker || -n "${CHROME_PATH:-}" ]]; then
 check "drop pages have a preview card" yes "$(curl -s "$bot_url" | contains 'property="og:image:width" content="1200"')"
 check "preview card renders" "200 image/png" "$(curl -s -o /dev/null -w '%{http_code} %{content_type}' "$bot_url?card=1")"
+fi
 check "card page needs a signed token" 401 "$(status "$bot_url?card-frame=forged&until=99999999999999")"
 check "locked drops have no card" 401 "$(status "$secret_url?card=1")"
 

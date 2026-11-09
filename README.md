@@ -27,6 +27,8 @@ It copies the project, asks for your hostname, name, accent colour and code them
 npx jalco-drop init my-drop --domain drop.example.com --owner Tess --accent "#3b82f6" --theme vesper --deploy --yes
 ```
 
+Not on Cloudflare? Pick `--target docker`: setup writes `.env` and `docker-compose.yml`, and `docker compose up -d --build` runs the same app as a Node server with Chromium for preview cards. Files go to a `/data` volume, or to any S3-compatible bucket (AWS S3, Backblaze B2, MinIO, R2's S3 API) with `STORAGE=s3`. Put a TLS reverse proxy (Caddy, nginx, Cloudflare Tunnel) in front of port 3000. See `.env.example` for every option.
+
 In a clone, run `npm install && npm run setup` instead. Handing the repo to a coding agent works too: [AGENTS.md](AGENTS.md) walks it through the same steps.
 
 Settings start from `vars` in `wrangler.jsonc`: `SITE_NAME`, `OWNER_NAME`, `ACCENT_COLOR`, `CODE_THEME` and `HOME_URL`. After deploying, change them under **Settings** in `/admin`, with a live preview. Saved settings are stored in R2 and override the file without a redeploy; **Reset to deploy values** goes back to the file.
@@ -80,7 +82,7 @@ npm run typecheck
 npm test
 ```
 
-`npm run build` bundles `client/grain.js` into `public/grain.js`; `dev`, `test` and `deploy` run it first. `npm test` starts `wrangler dev` with throwaway local storage and drives the Worker through the CLI and curl.
+`npm run test:node` runs the same smoke tests against the Node server (`STORAGE=s3` with the `S3_*` variables to test S3; set `CHROME_PATH` to include preview cards). `npm run build` `client/grain.js` into `public/grain.js`; `dev`, `test` and `deploy` run it first. `npm test` starts `wrangler dev` with throwaway local storage and drives the Worker through the CLI and curl.
 
 ## Credits
 

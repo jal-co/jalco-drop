@@ -3,14 +3,33 @@
     "target": "es2022",
     "module": "es2022",
     "moduleResolution": "bundler",
-    "lib": ["es2022", "dom", "dom.iterable"],
-    "types": ["@cloudflare/workers-types"],
+    "lib": [
+      "es2022",
+      "dom",
+      "dom.iterable"
+    ],
+    "types": [
+      "@cloudflare/workers-types"
+    ],
     "jsx": "react-jsx",
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
     "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] }
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
   },
-  "include": ["src", "client"]
+  "include": [
+    "src",
+    "client"
+  ],
+  "exclude": [
+    "src/node.ts",
+    "src/platform/fs-store.ts",
+    "src/platform/s3-store.ts",
+    "src/platform/node-*.ts"
+  ]
 }

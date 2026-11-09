@@ -14,22 +14,24 @@ const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const HOSTNAME = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
 const BUCKET = /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/;
 
-const HELP = `Set up jalco-drop on your Cloudflare account.
+const HELP = `Set up jalco-drop on Cloudflare, or as a Docker container anywhere.
 
 Usage:
   npx jalco-drop init [directory]   copy the project, configure it, and optionally deploy
   npm run setup                     configure an existing clone in place
 
 Options (any you leave out are asked for, unless --yes):
+  --target NAME        cloudflare or docker (default: cloudflare)
   --domain HOST        hostname to serve from, e.g. drop.example.com (required)
   --owner NAME         who links say sent them, e.g. Justin
   --name NAME          site name shown in the interface (default: jalco-drop)
   --accent HEX         accent colour, e.g. #ff4f00
   --theme NAME         code theme: ${CODE_THEMES.join(", ")}
   --home URL           where / redirects (default: ${DEFAULTS.homeUrl})
-  --bucket NAME        R2 bucket name (default: jalco-drop)
+  --bucket NAME        R2 bucket name, Cloudflare only (default: jalco-drop)
   --yes                accept defaults and never prompt
-  --deploy             create the bucket, deploy, and set a new admin token
+  --deploy             Cloudflare: create the bucket, deploy and set an admin token.
+                       Docker: build and start the container with docker compose
   -h, --help           show this help`;
 
 const { values: flags, positionals } = parseArgs({
@@ -42,6 +44,7 @@ const { values: flags, positionals } = parseArgs({
     theme: { type: "string" },
     home: { type: "string" },
     bucket: { type: "string" },
+    target: { type: "string" },
     yes: { type: "boolean", default: false },
     deploy: { type: "boolean", default: false },
     help: { type: "boolean", short: "h", default: false },
@@ -94,6 +97,29 @@ function copyProject(target) {
   if (!run("npm", ["install"], { cwd: target })) fail("npm install failed.");
 }
 
+async function setUpDocker() {
+  const adminToken = randomBytes(32).toString("base64url");
+  const vars = { ADMIN_TOKEN: adminToken, SITE_NAME: name, OWNER_NAME: owner, ACCENT_COLOR: accent, CODE_THEME: theme, HOME_URL: home };
+  const template = readFileSync(join(projectDir, ".env.example"), "utf8");
+  const env = template.replace(/^([A-Z_]+)=.*$/gm, (line, key) => (key in vars ? `${key}=${vars[key]}` : line));
+  writeFileSync(join(projectDir, ".env"), env, { mode: 0o600 });
+  cpSync(join(projectDir, "docker-compose.example.yml"), join(projectDir, "docker-compose.yml"));
+  console.log(`\nWrote .env and docker-compose.yml for https://${domain}`);
+  const start = await confirm("\nBuild and start the container now?");
+  prompt?.close();
+  const cd = relative(process.cwd(), projectDir) ? `  cd ${relative(process.cwd(), projectDir)}\n` : "";
+  if (start && !run("docker", ["compose", "up", "-d", "--build"], { cwd: projectDir })) fail("docker compose failed. Is Docker running?");
+  console.log(`
+${start ? "Running on port 3000." : `When you're ready:\n${cd}  docker compose up -d --build`}
+
+Admin token (also in .env, keep that file private):
+  ${adminToken}
+
+Point ${domain} at this machine through a reverse proxy with TLS (Caddy, nginx, Cloudflare Tunnel) that forwards to port 3000.
+Files live in the drop-data volume. For S3 storage, set STORAGE=s3 and the S3_* values in .env.`);
+  process.exit(0);
+}
+
 const command = positionals[0];
 if (command !== undefined && command !== "init") fail(`Unknown command "${command}".\n\n${HELP}`);
 const projectDir = command === "init" ? resolve(positionals[1] ?? "jalco-drop") : process.cwd();
@@ -101,12 +127,14 @@ if (command === "init") copyProject(projectDir);
 if (!existsSync(join(projectDir, "wrangler.example.jsonc"))) fail("Run this inside a jalco-drop checkout, or use npx jalco-drop init.");
 
 if (prompt) console.log("\nConfigure your drop site. Press Enter to keep a default.\n");
-const domain = (await ask("Domain to serve from", { flag: flags.domain, valid: (value) => HOSTNAME.test(value), hint: "A hostname like drop.example.com. Its zone must be on your Cloudflare account." })).toLowerCase();
+const target = await ask("Host on cloudflare or docker", { flag: flags.target, fallback: "cloudflare", valid: (value) => value === "cloudflare" || value === "docker", hint: "Type cloudflare or docker." });
+const domain = (await ask("Domain to serve from", { flag: flags.domain, valid: (value) => HOSTNAME.test(value), hint: target === "docker" ? "A hostname like drop.example.com, pointed at the machine running Docker." : "A hostname like drop.example.com. Its zone must be on your Cloudflare account." })).toLowerCase();
 const owner = await ask("Your name, as in \"Justin sent you\"", { flag: flags.owner, fallback: DEFAULTS.owner, valid: (value) => value.length > 0 && value.length <= 60, hint: "1 to 60 characters." });
 const name = await ask("Site name", { flag: flags.name, fallback: DEFAULTS.name, valid: (value) => value.length > 0 && value.length <= 40, hint: "1 to 40 characters." });
 const accent = (await ask("Accent colour", { flag: flags.accent, fallback: DEFAULTS.accent, valid: (value) => HEX_COLOR.test(value), hint: "A hex colour like #ff4f00." })).toLowerCase();
 const theme = await ask("Code theme", { flag: flags.theme, fallback: DEFAULTS.codeTheme, valid: (value) => CODE_THEMES.includes(value), hint: `One of: ${CODE_THEMES.join(", ")}.` });
 const home = await ask("Where / redirects", { flag: flags.home, fallback: DEFAULTS.homeUrl, valid: (value) => URL.canParse(value), hint: "A full URL." });
+if (target === "docker") await setUpDocker();
 const bucket = await ask("R2 bucket name", { flag: flags.bucket, fallback: "jalco-drop", valid: (value) => BUCKET.test(value), hint: "3 to 63 lowercase letters, digits or dashes." });
 
 const config = JSON.parse(readFileSync(join(projectDir, "wrangler.example.jsonc"), "utf8"));

@@ -1,6 +1,6 @@
 {
   "name": "jalco-drop",
-  "main": "src/index.tsx",
+  "main": "src/worker.ts",
   "compatibility_date": "2026-10-07",
   "workers_dev": false,
   "preview_urls": false,
