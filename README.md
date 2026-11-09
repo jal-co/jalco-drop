@@ -1,9 +1,10 @@
 <h1 align="center"><img src="https://shieldcn.dev/header/dots.svg?title=jalco-drop&subtitle=A%20self-hosted%20file%20transfer%20interface%20for%20people%20and%20agents&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjUxLjYgNTAuMyA2NzUuMyA3ODAuNCI%2BPHBhdGggZmlsbD0iI2ZmNGYwMCIgZD0iTTQ2Ni40MTQgMjUyLjNMNDY2LjQxNCA2NDNMNTkzLjU2NCA2NDNDNjAzLjE4MyA2NDMgNjA3LjE5MSA2NTMuNiA2MDAuNzc4IDY2MS42TDQ2MS4wMDQgODMwLjdDNTM4LjY1NiA4MTMuOSA2MDYuODkgNzY1LjMgNjU0Ljk4NSA3MDQuNEM3MDEuODc3IDY0NS4xIDcyOS4zMzEgNTcwLjQgNzI2LjcyNiA0OTUuN0M3MjQuNzIyIDQyMi4yIDY5OC4xNyAzNjMuNSA2NTAuNjc2IDMwNy4zQzYxMy4zMDMgMjYzIDU2Ny42MTMgMjI2LjEgNTIzLjgyNyAxODcuM0M0NzUuNjMzIDE0NC43IDQzMS41NDYgOTkuMSAzOTAuNDY1IDUwLjNDMzU1LjE5NiA5MS4xIDMyMS45MzEgMTI5LjcgMjgxLjM1MSAxNjcuMUMyMzUuNTYxIDIwOS40IDE4NS4xNjIgMjQ2LjIgMTQzLjA3OSAyOTIuMUM4OC43NzMgMzUxLjQgNTYuMTA4IDQxNC44IDUyLjEwMSA0ODUuOUM0Ny42OTIgNTU4LjYgNzMuNTQzIDYzMS44IDExNS42MjUgNjg5LjZDMTY0LjEyMSA3NTYuMyAyMzUuMTYgODEyLjIgMzIwLjYyOCA4MzAuN0wxODAuNjUzIDY2Mi4xQzE3NC4wNCA2NTQuMiAxNzcuODQ4IDY0MyAxODcuNTY3IDY0M0wzMTQuOTE3IDY0M0wzMTQuOTE3IDI1Mi4zQzMxNC45MTcgMjQ1LjkgMzE5LjIyNSAyNDEuMyAzMjUuNjM4IDI0MS4zTDQ1NS4yOTMgMjQxLjNDNDYxLjkwNiAyNDEuMyA0NjYuNDE0IDI0NS45IDQ2Ni40MTQgMjUyLjNaIi8%2BPC9zdmc%2BCg%3D%3D&logoColor=ff4f00" alt="jalco-drop" width="100%" /></h1>
 
 <p align="center">
-  <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/jal-co/jalco-drop"><img src="https://shieldcn.dev/badge/-Deploy%20to%20Cloudflare-f38020.svg?logo=cloudflare&size=lg" alt="Deploy to Cloudflare" /></a>
-  <a href="https://render.com/deploy?repo=https://github.com/jal-co/jalco-drop"><img src="https://shieldcn.dev/badge/-Deploy%20to%20Render-000000.svg?logo=render&size=lg&variant=secondary" alt="Deploy to Render" /></a>
-  <a href="https://drop.justinlevine.me"><img src="https://shieldcn.dev/badge/-Docs-000000.svg?logo=lu:BookOpen&size=lg&variant=secondary" alt="Docs" /></a>
+  <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/jal-co/jalco-drop"><img src="https://shieldcn.dev/badge/-Deploy%20to%20Cloudflare-f38020.svg?logo=cloudflare" alt="Deploy to Cloudflare" /></a>
+  <a href="https://render.com/deploy?repo=https://github.com/jal-co/jalco-drop"><img src="https://shieldcn.dev/badge/-Deploy%20to%20Render-000000.svg?logo=render&variant=secondary" alt="Deploy to Render" /></a>
+  <a href="https://drop.justinlevine.me/quickstart#neon"><img src="https://shieldcn.dev/badge/-Deploy%20on%20Neon-000000.svg?logo=neon&logoColor=00e599&variant=secondary" alt="Deploy on Neon" /></a>
+  <a href="https://drop.justinlevine.me"><img src="https://shieldcn.dev/badge/-Docs-000000.svg?logo=lu:BookOpen&variant=secondary" alt="Docs" /></a>
 </p>
 
 <p align="center">
