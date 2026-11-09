@@ -1,8 +1,18 @@
-# jalco-drop
+<h1 align="center"><img src="https://shieldcn.dev/header/dots.svg?title=jalco-drop&subtitle=Your%20own%20WeTransfer%2C%20for%20people%20and%20agents&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjUxLjYgNTAuMyA2NzUuMyA3ODAuNCI%2BPHBhdGggZmlsbD0iI2ZmNGYwMCIgZD0iTTQ2Ni40MTQgMjUyLjNMNDY2LjQxNCA2NDNMNTkzLjU2NCA2NDNDNjAzLjE4MyA2NDMgNjA3LjE5MSA2NTMuNiA2MDAuNzc4IDY2MS42TDQ2MS4wMDQgODMwLjdDNTM4LjY1NiA4MTMuOSA2MDYuODkgNzY1LjMgNjU0Ljk4NSA3MDQuNEM3MDEuODc3IDY0NS4xIDcyOS4zMzEgNTcwLjQgNzI2LjcyNiA0OTUuN0M3MjQuNzIyIDQyMi4yIDY5OC4xNyAzNjMuNSA2NTAuNjc2IDMwNy4zQzYxMy4zMDMgMjYzIDU2Ny42MTMgMjI2LjEgNTIzLjgyNyAxODcuM0M0NzUuNjMzIDE0NC43IDQzMS41NDYgOTkuMSAzOTAuNDY1IDUwLjNDMzU1LjE5NiA5MS4xIDMyMS45MzEgMTI5LjcgMjgxLjM1MSAxNjcuMUMyMzUuNTYxIDIwOS40IDE4NS4xNjIgMjQ2LjIgMTQzLjA3OSAyOTIuMUM4OC43NzMgMzUxLjQgNTYuMTA4IDQxNC44IDUyLjEwMSA0ODUuOUM0Ny42OTIgNTU4LjYgNzMuNTQzIDYzMS44IDExNS42MjUgNjg5LjZDMTY0LjEyMSA3NTYuMyAyMzUuMTYgODEyLjIgMzIwLjYyOCA4MzAuN0wxODAuNjUzIDY2Mi4xQzE3NC4wNCA2NTQuMiAxNzcuODQ4IDY0MyAxODcuNTY3IDY0M0wzMTQuOTE3IDY0M0wzMTQuOTE3IDI1Mi4zQzMxNC45MTcgMjQ1LjkgMzE5LjIyNSAyNDEuMyAzMjUuNjM4IDI0MS4zTDQ1NS4yOTMgMjQxLjNDNDYxLjkwNiAyNDEuMyA0NjYuNDE0IDI0NS45IDQ2Ni40MTQgMjUyLjNaIi8%2BPC9zdmc%2BCg%3D%3D&logoColor=ff4f00" alt="jalco-drop" width="100%" /></h1>
 
-Your own WeTransfer, for people and agents. Send a file, a folder, a paste or a screen recording and get a link that opens properly, on your own domain. It runs on one Cloudflare Worker and an R2 bucket, or one Docker container anywhere. Docs, with a recording of each flow, are at [drop.justinlevine.me](https://drop.justinlevine.me).
+<p align="center">
+  <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/jal-co/jalco-drop"><img src="https://shieldcn.dev/badge/-Deploy%20to%20Cloudflare-f38020.svg?logo=cloudflare&size=lg" alt="Deploy to Cloudflare" /></a>
+  <a href="https://render.com/deploy?repo=https://github.com/jal-co/jalco-drop"><img src="https://shieldcn.dev/badge/-Deploy%20to%20Render-000000.svg?logo=render&size=lg&variant=secondary" alt="Deploy to Render" /></a>
+  <a href="https://drop.justinlevine.me"><img src="https://shieldcn.dev/badge/-Docs-000000.svg?logo=lu:BookOpen&size=lg&variant=secondary" alt="Docs" /></a>
+</p>
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/jal-co/jalco-drop) [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/jal-co/jalco-drop)
+<p align="center">
+  <a href="https://github.com/jal-co/jalco-drop/actions/workflows/ci.yml"><img src="https://shieldcn.dev/github/ci/jal-co/jalco-drop.svg?variant=secondary" alt="CI" /></a>
+  <a href="LICENSE"><img src="https://shieldcn.dev/github/license/jal-co/jalco-drop.svg?variant=secondary" alt="License" /></a>
+  <a href="https://github.com/jal-co/jalco-drop/stargazers"><img src="https://shieldcn.dev/github/stars/jal-co/jalco-drop.svg?variant=secondary" alt="Stars" /></a>
+</p>
+
+Send a file, a folder, a paste or a screen recording and get a link that opens properly, on your own domain. It runs on one Cloudflare Worker and an R2 bucket, or one Docker container anywhere. Docs, with a recording of each flow, are at [drop.justinlevine.me](https://drop.justinlevine.me).
 
 The Cloudflare button forks the repo into your account, creates the R2 bucket, asks for an `ADMIN_TOKEN` and deploys to a `workers.dev` address; add your domain under the Worker's Domains & Routes afterwards. The Render button runs the Docker image with a 10 GB disk and generates the admin token for you (Render needs a paid plan for disks).
 
