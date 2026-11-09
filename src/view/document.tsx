@@ -29,7 +29,7 @@ function CardTags({ title, card }: { title: string; card: Card }) {
   );
 }
 
-export function Document({ title, card, islands, grain, bodyClassName, children }: { title: string; card?: Card; islands?: boolean; grain?: boolean; bodyClassName?: string; children: ReactNode }) {
+export function Document({ title, card, islands, grain, forms, code, bodyClassName, children }: { title: string; card?: Card; islands?: boolean; grain?: boolean; forms?: boolean; code?: boolean; bodyClassName?: string; children: ReactNode }) {
   return (
     <html lang="en" className="dark">
       <head>
@@ -42,10 +42,12 @@ export function Document({ title, card, islands, grain, bodyClassName, children 
         {card && <CardTags title={title} card={card} />}
         <link rel="icon" href="/favicon.png" />
         <link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossOrigin="" />
+        {code && <link rel="preload" href="/fonts/GeistMono-Variable.woff2" as="font" type="font/woff2" crossOrigin="" />}
         <link rel="stylesheet" href="/style.css" />
         <style>{`:root{--marker:${site.accent}}`}</style>
         {islands && <script type="module" src="/js/islands.js" />}
         {grain && <script type="module" src="/grain.js" />}
+        {forms && <script defer src="/js/forms.js" />}
       </head>
       <body className={bodyClassName}>{children}</body>
     </html>

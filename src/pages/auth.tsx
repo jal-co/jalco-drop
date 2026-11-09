@@ -7,7 +7,7 @@ import { site } from "@/view/site";
 
 function AuthCard({ title, description, action, field, autoComplete, submit, error }: { title: string; description?: string; action: string; field: { name: string; label: string }; autoComplete: string; submit: string; error?: string }) {
   return (
-    <Document title={title}>
+    <Document title={title} forms>
       <main className="grid min-h-dvh place-items-center p-6">
         <Card className="w-full max-w-sm gap-6 py-6">
           <CardHeader className="px-6">

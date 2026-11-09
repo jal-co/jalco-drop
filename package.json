@@ -31,7 +31,7 @@
     "node": ">=22.18"
   },
   "scripts": {
-    "build": "esbuild client/grain.js --bundle --minify --format=esm --outfile=public/grain.js && esbuild client/islands.tsx --bundle --minify --format=esm --splitting --outdir=public/js --define:process.env.NODE_ENV='\"production\"' --jsx=automatic && tailwindcss -i src/styles.css -o public/style.css --minify",
+    "build": "esbuild client/grain.js --bundle --minify --format=esm --outfile=public/grain.js && esbuild client/forms.js --minify --outfile=public/js/forms.js && esbuild client/islands.tsx --bundle --minify --format=esm --splitting --outdir=public/js --define:process.env.NODE_ENV='\"production\"' --jsx=automatic && tailwindcss -i src/styles.css -o public/style.css --minify",
     "predev": "npm run build",
     "dev": "wrangler dev --host localhost:8787",
     "predeploy": "npm run build",
