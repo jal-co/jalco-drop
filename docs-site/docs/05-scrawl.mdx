@@ -1,0 +1,24 @@
+---
+title: Scrawl captures
+description: Share a Scrawl screen recording as a video page with its transcript and marked moments.
+---
+
+<video className="drop-video" src="/videos/scrawl.mp4" poster="/videos/scrawl.jpg" autoPlay muted loop playsInline aria-label="A Scrawl capture page: the recording on the left, the transcript and marked moments on the right" />
+
+[Scrawl](https://scrawl.kitlangton.com), by [Kit Langton](https://github.com/kitlangton/scrawl), records your screen while you talk, click and draw. jalco-drop turns a capture into a page anyone can open: the recording on the left, and the transcript with every marked moment on the right. Clicking a moment jumps the video there.
+
+```bash
+jalco-drop ~/Library/Application\ Support/scrawl/captures/scrawl-<id>.scrawl
+```
+
+The CLI spots a capture and uploads only what the page needs:
+
+- the video, with your narration merged in (Scrawl records them separately, so this needs `ffmpeg`);
+- the marked frames and the contact sheet;
+- a trimmed `scrawl.json`, without the cursor track or the list of every window title on your screen.
+
+Captures expire after 30 days unless you pass `-e`. Link previews carry `og:video`, so the recording can play inline where a chat app supports it.
+
+:::warning
+A capture shows whatever was on your screen, including browser tabs and bookmarks. Watch it before you share it.
+:::

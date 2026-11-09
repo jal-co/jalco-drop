@@ -1,6 +1,6 @@
 # jalco-drop
 
-Your own file, paste and screen-recording host on Cloudflare. One Worker, one R2 bucket. Name it, pick an accent colour and a code theme, and deploy.
+Your own file, paste and screen-recording host. One Cloudflare Worker and an R2 bucket, or one Docker container anywhere. Name it, pick an accent colour and a code theme, and deploy. Docs, with a recording of each flow, are at [drop.justinlevine.me](https://drop.justinlevine.me).
 
 Upload a file, a folder, a paste or a screen recording, and get back a link worth sending:
 
@@ -8,7 +8,7 @@ Upload a file, a folder, a paste or a screen recording, and get back a link wort
 - **Markdown** renders as a document, frontmatter as a properties list. **HTML** runs in a sandboxed frame. `?view=source` shows either as source.
 - **Images, video and audio** preview in the page and seek by byte range. **PDFs** open in the browser's viewer, **CSV/TSV** as a table, and **SVG** as an image in a sandbox.
 - **Zips and folders** open as a "sent you" page with a file tree, a preview drawer, and a [Paper](https://shaders.paper.design/) Grain Gradient whose shape and motion come from the upload's checksum.
-- **Scrawl captures** open as a video page with the transcript and each marked moment.
+- **[Scrawl](https://scrawl.kitlangton.com) captures** (by Kit Langton) open as a video page with the transcript and each marked moment.
 - **Link previews** carry a 1200x630 card with the real gradient, rendered once in Cloudflare Browser Rendering after upload, plus `og:video` for recordings.
 
 Every drop can have a password (PBKDF2, checked on the server) and an expiry. Expired drops stop being served at once and an hourly cron deletes them. `/` redirects away, nothing is listable without a token, and each IP gets 60 requests a minute.
@@ -82,11 +82,31 @@ npm run typecheck
 npm test
 ```
 
-`npm run test:node` runs the same smoke tests against the Node server (`STORAGE=s3` with the `S3_*` variables to test S3; set `CHROME_PATH` to include preview cards). `npm run build` `client/grain.js` into `public/grain.js`; `dev`, `test` and `deploy` run it first. `npm test` starts `wrangler dev` with throwaway local storage and drives the Worker through the CLI and curl.
+`npm run test:node` runs the same smoke tests against the Node server (`STORAGE=s3` with the `S3_*` variables to test S3; set `CHROME_PATH` to include preview cards). `npm run build` bundles the client scripts into `public/js` and Tailwind into `public/style.css`; `dev`, `test` and `deploy` run it first. `npm test` starts `wrangler dev` with throwaway local storage and drives the Worker through the CLI and curl.
+
+## Docs
+
+The docs site is [Blume](https://useblume.dev) in `docs-site/`, deployed as static assets to drop.justinlevine.me. `docs-site/docs/` holds the pages, `docs-site/public/videos/` the recordings, and the Changelog page is generated from `CHANGELOG.md` on every build.
+
+```sh
+cd docs-site && npm install
+npm run dev      # preview
+npm run deploy   # build and deploy
+```
+
+## Releases
+
+Versions follow semver; the running version shows in the `/admin` footer. Add notes under `## Unreleased` in `CHANGELOG.md` as you go, then:
+
+```sh
+npm run release -- minor   # or patch, major, 1.2.0; --dry-run to preview
+```
+
+It moves the notes under the new version, bumps `package.json`, freezes the previous docs as an archived Blume version on a minor or major bump (with the version switcher, an "old version" notice and canonical links to the latest), runs the checks, commits, tags, pushes, creates the GitHub release, and deploys the app and the docs. Self-hosters upgrade with `npx jalco-drop upgrade`, or `git pull` in a clone.
 
 ## Credits
 
-File type icons are [Font Awesome Free](https://fontawesome.com/license/free) (CC BY 4.0). The gradient is [Paper Shaders](https://shaders.paper.design/) Grain Gradient. Code colors are [Pierre Dark](https://github.com/pierrecomputer/theme).
+Scrawl is by [Kit Langton](https://github.com/kitlangton/scrawl). File type icons are [Font Awesome Free](https://fontawesome.com/license/free) (CC BY 4.0). The gradient is [Paper Shaders](https://shaders.paper.design/) Grain Gradient. Code colors are [Pierre Dark](https://github.com/pierrecomputer/theme).
 
 ## License
 

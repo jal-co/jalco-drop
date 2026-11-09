@@ -1,0 +1,17 @@
+{
+  "name": "jalco-drop-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/sync-changelog.mjs && blume dev",
+    "build": "node scripts/sync-changelog.mjs && blume build",
+    "doctor": "blume doctor",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "dependencies": {
+    "blume": "^2.2.7"
+  },
+  "devDependencies": {
+    "wrangler": "^4.158.0"
+  }
+}

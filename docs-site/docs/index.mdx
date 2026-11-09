@@ -1,0 +1,29 @@
+---
+title: jalco-drop
+description: Your own file, paste and screen-recording host. Send a link that looks like you made it.
+sidebar:
+  label: Introduction
+---
+
+<video className="drop-video" src="/videos/code.mp4" poster="/videos/code.jpg" autoPlay muted loop playsInline aria-label="A code file opening in jalco-drop, with the actions menu and the right-click pie menu" />
+
+jalco-drop turns a file, a folder, a paste or a screen recording into a link worth sending. It runs on one Cloudflare Worker and an R2 bucket, or as one Docker container on any server, and everything about it is yours: the domain, the name, the accent colour, the code theme.
+
+- **Code and text** open highlighted, with line links like `#L12`.
+- **Markdown** renders as a document. **HTML** runs in a sandbox. **CSV** becomes a table.
+- **Images, video, audio and PDFs** play or preview in the page.
+- **Folders and zips** open as a "sent you" page with a file tree and a preview drawer.
+- **[Scrawl](https://scrawl.kitlangton.com) captures** open as a video page with the transcript and each marked moment.
+- **Link previews** get a real card in Slack, iMessage and X, with `og:video` for recordings.
+- **Passwords and expiry** are checked on the server. Expired drops are deleted for you.
+- **Named tokens** let bots and scripts upload under their own name and icon.
+
+See it live at [drop.example.com](https://drop.example.com).
+
+**[Quickstart](/quickstart)**
+
+Deploy your own in a few minutes.
+
+**[Uploading](/uploading)**
+
+The CLI, the admin and the HTTP API.

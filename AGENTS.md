@@ -64,8 +64,14 @@ For bots, create a named token under **Tokens** in `/admin` with only the permis
 
 Use **Settings** in `/admin`; it applies straight away. Or edit `vars` in `wrangler.jsonc` and run `npm run deploy` (settings saved in the admin override the file). Preview cards are cached per drop; existing ones keep their old colours until re-rendered.
 
+## Upgrading
+
+Run `npx jalco-drop upgrade` (or `git pull` in a clone), read `CHANGELOG.md` for **Breaking** entries, then `npm run deploy` or `docker compose up -d --build`. Drops, tokens and settings live in storage and carry over.
+
 ## Working on the code
 
 - `npm run dev` for a local server, `npm run typecheck`, `npm test` (smoke tests against a throwaway local store).
 - Pages render on the server in `src/pages/`; interactive parts are islands in `src/islands/`, hydrated by `client/islands.tsx`.
 - UI is shadcn on Base UI in `src/components/ui/`, themed in `src/styles.css`. Restyle variants there, not with overrides at call sites.
+- Note user-facing changes under `## Unreleased` in `CHANGELOG.md`. `npm run release -- <patch|minor|major>` cuts the version, snapshots the Blume docs in `docs-site/` on a minor or major bump, tags, releases and deploys both sites.
+- When a change alters a flow, update its page in `docs-site/docs/` and re-record the matching clip in `docs-site/public/videos/`.

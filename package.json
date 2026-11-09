@@ -1,6 +1,6 @@
 {
   "name": "jalco-drop",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A file, paste and screen-recording host on one Cloudflare Worker and an R2 bucket.",
   "license": "MIT",
   "repository": {
@@ -30,7 +30,8 @@
     ".dockerignore",
     ".env.example",
     "docker-compose.example.yml",
-    "tsconfig.node.json"
+    "tsconfig.node.json",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=22.18"
@@ -47,7 +48,9 @@
     "setup": "node scripts/setup.mjs",
     "build:node": "npm run build && esbuild src/node.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/server.mjs --jsx=automatic --external:puppeteer-core --define:process.env.NODE_ENV='\"production\"' --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
     "start": "node dist/server.mjs",
-    "test:node": "npm run build:node && SMOKE_TARGET=node bash test/smoke.sh"
+    "test:node": "npm run build:node && SMOKE_TARGET=node bash test/smoke.sh",
+    "upgrade": "node scripts/upgrade.mjs",
+    "release": "node scripts/release.mjs"
   },
   "devDependencies": {
     "@base-ui/react": "^1.9.0",

@@ -1,0 +1,82 @@
+---
+title: Quickstart
+description: Set up jalco-drop on Cloudflare in a few minutes, or as a Docker container on any server.
+---
+
+You need Node 22.18 or newer. Pick where it runs.
+
+<Tabs>
+<Tab title="Cloudflare">
+
+You need a Cloudflare account with the domain you want to serve from, R2 enabled, and Browser Rendering (on the Workers Free plan, 10 browser minutes a day, about one preview card per upload).
+
+<Steps>
+<Step title="Create the project">
+
+```bash
+npx jalco-drop init my-drop
+```
+
+Setup copies the project and asks for your domain, your name, a site name, an accent colour, a code theme and where `/` should redirect. Every question has a default.
+
+</Step>
+<Step title="Deploy">
+
+Answer **yes** when setup offers to deploy. It signs in to Cloudflare, creates the R2 bucket, deploys the Worker, and prints a new admin token once. Save it in a password manager.
+
+</Step>
+<Step title="Upload something">
+
+```bash
+export JALCO_DROP_URL=https://drop.example.com
+export JALCO_DROP_TOKEN=<your admin token>
+bin/jalco-drop README.md
+```
+
+</Step>
+</Steps>
+
+</Tab>
+<Tab title="Docker">
+
+You need Docker and a server with a domain pointed at it.
+
+<Steps>
+<Step title="Create the project">
+
+```bash
+npx jalco-drop init my-drop --target docker
+```
+
+Setup writes `.env` (with a fresh admin token) and `docker-compose.yml`.
+
+</Step>
+<Step title="Start it">
+
+```bash
+cd my-drop
+docker compose up -d --build
+```
+
+The image includes Chromium, so preview cards work out of the box. Files go to the `drop-data` volume.
+
+</Step>
+<Step title="Put TLS in front">
+
+Point your domain at the server through a reverse proxy with TLS, such as Caddy, nginx or Cloudflare Tunnel, forwarding to port 3000.
+
+</Step>
+</Steps>
+
+</Tab>
+</Tabs>
+
+:::tip
+Every question has a flag, so setup also runs unattended:
+
+```bash
+npx jalco-drop init my-drop --domain drop.example.com --owner Tess --accent "#3b82f6" --theme vesper --deploy --yes
+```
+
+Handing the repo to a coding agent works too. `AGENTS.md` walks it through the same steps.
+:::

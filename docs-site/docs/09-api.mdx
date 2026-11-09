@@ -1,0 +1,39 @@
+---
+title: API
+description: Upload, list and delete drops over HTTP with a bearer token.
+---
+
+Send `Authorization: Bearer <token>` with every request. The token can be the admin token or a [named token](/tokens) with the right permission.
+
+## Upload
+
+`POST /api/items` with the file as the request body. Needs the **upload** permission.
+
+| Parameter | Where | |
+| --- | --- | --- |
+| `name` | query | File name, with the extension that picks highlighting. Default `paste.txt` |
+| `slug` | query | Readable link path. Default: random |
+| `expires` | query | `12h`, `7d` and so on. Default: never |
+| `X-Drop-Password` | header | Require a password to open it |
+| `Content-Type` | header | The file's type |
+
+Returns `201` with `{ "slug": "k3x9...", "url": "https://drop.example.com/k3x9..." }`.
+
+## List
+
+`GET /api/items` returns every drop: `slug`, `name`, `size`, `type`, `uploaded`, `locked`, `expires`, `url`. Needs the **list** permission.
+
+## Delete
+
+`DELETE /api/items/<slug>` returns `204`. Needs the **delete** permission.
+
+## Errors
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Bad slug or expiry |
+| `401` | Missing or wrong token, or a token without the permission |
+| `409` | Slug taken |
+| `411` | No `Content-Length` |
+| `413` | Over the upload limit |
+| `429` | More than 60 requests a minute |

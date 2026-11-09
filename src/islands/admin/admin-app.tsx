@@ -36,7 +36,7 @@ function CreatedNotice({ origin, slug }: { origin: string; slug: string }) {
   );
 }
 
-export function AdminApp({ siteName, ...props }: AdminProps & { siteName: string }) {
+export function AdminApp({ siteName, version, ...props }: AdminProps & { siteName: string; version: string }) {
   return (
     <TooltipProvider>
       <header className="sticky top-0 z-20 flex h-14 items-center gap-4 border-b border-border bg-background/85 px-4 backdrop-blur sm:px-6">
@@ -63,6 +63,10 @@ export function AdminApp({ siteName, ...props }: AdminProps & { siteName: string
         {props.tab === "drops" && <DropsList drops={props.drops} origin={props.origin} />}
         {props.tab === "tokens" && <TokensList tokens={props.tokens} />}
         {props.tab === "settings" && <SettingsForm settings={props.settings} />}
+        <footer className="mt-8 flex justify-center gap-4 text-xs text-muted-foreground">
+          <span>jalco-drop {version}</span>
+          <a href="https://drop.justinlevine.me" className="underline decoration-foreground/30 underline-offset-4 hover:text-foreground">Docs</a>
+        </footer>
       </main>
     </TooltipProvider>
   );

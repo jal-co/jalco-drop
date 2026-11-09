@@ -4,11 +4,16 @@ set -euo pipefail
 if [[ "${1:-}" == "init" ]]; then
   exec node "$(dirname "$(realpath "$0")")/../scripts/setup.mjs" "$@"
 fi
+if [[ "${1:-}" == "upgrade" ]]; then
+  shift
+  exec node "$(dirname "$(realpath "$0")")/../scripts/upgrade.mjs" "$@"
+fi
 
 usage() {
   cat <<'USAGE'
 Usage: jalco-drop [options] <file | directory | ->
        jalco-drop init [directory]
+       jalco-drop upgrade [version]
 
 Uploads a file, a directory (zipped), a Scrawl capture, or stdin to your drop site and prints the link.
 "init" sets up a new drop site on your Cloudflare account.
