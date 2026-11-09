@@ -77,7 +77,7 @@ export function DropPage({ drop, preview, origin, card }: { drop: Drop; preview:
   const rawHref = `/${drop.slug}/${encodeURIComponent(drop.name)}`;
   return (
     <Document title={drop.name} card={card} islands bodyClassName="viewer-page">
-      <header className="fixed top-3 left-3 z-30 flex h-11 max-w-[calc(100vw-5rem)] items-center gap-2.5 rounded-full bg-popover px-4 shadow-overlay">
+      <header className="fixed top-[max(0.75rem,env(safe-area-inset-top))] left-[max(0.75rem,env(safe-area-inset-left))] z-30 flex h-11 max-w-[calc(100vw-5rem)] items-center gap-2.5 rounded-full bg-popover px-4 shadow-overlay">
         <span className="hidden shrink-0 text-[0.8125rem] text-muted-foreground sm:inline">{site.name}</span>
         <span className="hidden h-3.5 w-px shrink-0 bg-border sm:block" aria-hidden="true" />
         <h1 className="flex min-w-0 items-center gap-2 text-sm font-medium">

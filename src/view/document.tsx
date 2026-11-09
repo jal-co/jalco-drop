@@ -34,7 +34,9 @@ export function Document({ title, card, islands, grain, bodyClassName, children 
     <html lang="en" className="dark">
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+        <meta name="theme-color" content="#0a0a0a" />
+        <meta name="color-scheme" content="dark" />
         <meta name="robots" content="noindex" />
         <title>{title}</title>
         {card && <CardTags title={title} card={card} />}

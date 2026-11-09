@@ -195,7 +195,7 @@
   color: #fafafa;
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .ln:hover {
     color: #a3a3a3;
   }

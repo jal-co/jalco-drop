@@ -132,7 +132,7 @@ export function FileActions({ actions }: { actions: FileAction[] }) {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="secondary" size="icon-lg" aria-label="File actions" className="fixed top-3 right-3 z-30 bg-popover shadow-overlay" />}>
+        <DropdownMenuTrigger render={<Button variant="secondary" size="icon-lg" aria-label="File actions" className="fixed top-[max(0.75rem,env(safe-area-inset-top))] right-[max(0.75rem,env(safe-area-inset-right))] z-30 bg-popover shadow-overlay" />}>
           <EllipsisIcon />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" sideOffset={8} className="w-48">
