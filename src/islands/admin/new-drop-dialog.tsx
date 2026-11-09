@@ -34,7 +34,7 @@ export function NewDropDialog() {
         <form method="post" action="/api/items" encType="multipart/form-data" onSubmit={() => setSubmitting(true)}>
           <FieldGroup className="gap-5">
             <Tabs value={mode} onValueChange={(value) => setMode(String(value))}>
-              <TabsList className="bg-field shadow-rim">
+              <TabsList className="bg-field">
                 <TabsTrigger value="file">File</TabsTrigger>
                 <TabsTrigger value="text">Paste text</TabsTrigger>
               </TabsList>
