@@ -4,6 +4,8 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
+## 1.0.1 (2026-11-09)
+
 - Fixed: `jalco-drop --help` no longer asks you to sign in first.
 
 ## 1.0.0 (2026-11-09)
