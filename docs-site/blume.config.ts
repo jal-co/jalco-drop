@@ -23,6 +23,7 @@ export default defineConfig({
   seo: {
     og: {
       site: "drop.justinlevine.me",
+      logo: "/logo.svg",
       palette: { accent: "#ff4f00", background: "#0a0a0a", foreground: "#f2f2f2", muted: "#a1a1a1", border: "#262626" },
     },
   },

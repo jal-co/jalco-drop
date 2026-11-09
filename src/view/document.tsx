@@ -42,7 +42,9 @@ export function Document({ title, card, islands, grain, forms, code, bodyClassNa
         <meta name="generator" content={`jalco-drop ${VERSION}`} />
         <title>{title}</title>
         {card && <CardTags title={title} card={card} />}
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
         <link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossOrigin="" />
         {code && <link rel="preload" href="/fonts/GeistMono-Variable.woff2" as="font" type="font/woff2" crossOrigin="" />}
         <link rel="stylesheet" href="/style.css" />
