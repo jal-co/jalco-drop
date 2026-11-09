@@ -11,7 +11,7 @@ jalco-drop is one app with three entry points: `src/worker.ts` for Cloudflare, `
 | Preview cards | Browser Rendering | Chromium in the image | Summary card, no image |
 | Rate limit | Workers rate limiting, 60 a minute per IP | In memory, 60 a minute per IP | In memory, per instance |
 | Expiry cleanup | Hourly cron trigger | Hourly timer | Hourly schedule trigger |
-| Largest upload | 100 MB (Cloudflare's limit) | `MAX_UPLOAD_MB`, default 100 | Neon's request limit |
+| Largest upload | 100 MB (Cloudflare's limit) | `MAX_UPLOAD_MB`, default 100 | 10 MB (Neon's request limit) |
 
 ## Cloudflare
 

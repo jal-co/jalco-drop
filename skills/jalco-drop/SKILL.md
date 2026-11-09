@@ -72,7 +72,7 @@ jalco-drop -l
 jalco-drop -d <slug>
 ```
 
-The largest single drop is 100 MB on Cloudflare; Docker sites set their own limit.
+The largest single drop is 100 MB on Cloudflare and 10 MB on Neon; Docker sites set their own limit.
 
 ## Failures
 

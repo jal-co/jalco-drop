@@ -21,7 +21,7 @@ Setup creates infrastructure on the user's account and mints credentials. Each s
 Ask one question: Cloudflare or Docker?
 
 - **Cloudflare**: one Worker and an R2 bucket on their account. Needs a Cloudflare account with R2 enabled; a domain is optional (it starts on `workers.dev`).
-- **Neon**: one Neon Function, a Neon bucket and an hourly cleanup trigger, all declared in `neon.ts`. Needs a Neon project in us-east-1, us-east-2, eu-central-1 or ap-southeast-1. No rendered link-preview images.
+- **Neon**: one Neon Function, a Neon bucket and an hourly cleanup trigger, all declared in `neon.ts`. Needs a Neon project in us-east-1, us-east-2, eu-central-1 or ap-southeast-1. No rendered link-preview images, and uploads cap at 10 MB.
 - **Docker**: one container on any server, storing files on a disk or in any S3-compatible bucket. Needs a server with Docker and a reverse proxy with TLS in front of port 3000.
 
 ## Deploy
