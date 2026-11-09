@@ -12,3 +12,5 @@ data/
 test-results/
 playwright-report/
 public/cli
+# Local secrets written by `elevenlabs onboard`
+/.env.local
