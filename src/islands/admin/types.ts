@@ -4,7 +4,7 @@ import type { Drop } from "@/view/types";
 
 export type AdminDrop = Omit<Drop, "uploaded"> & { uploaded: string };
 
-export type SettingsState = { current: SiteConfig; fromDeploy: SiteConfig; overridden: boolean };
+export type SettingsState = { current: SiteConfig; fromDeploy: SiteConfig; overridden: boolean; themeSamples: Partial<Record<string, string>> };
 
 export type AdminProps = {
   tab: "drops" | "tokens" | "settings";

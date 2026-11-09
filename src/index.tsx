@@ -206,9 +206,9 @@ const CARD_HEIGHT = 630;
 const CARD_FRAME_SECONDS = 60;
 const CARD_PAINT_TIMEOUT_MS = 15_000;
 const CARD_VERSION = "2";
-const THEME_SAMPLE = `export async function share(file: File) {
-  const link = await drop(file, { expires: "7d" });
-  return \`Sent \${file.name} (\${link})\`; // 42
+const THEME_SAMPLE = `function share(file) {
+  const link = drop(file, "7d");
+  return \`sent \${link}\`; // 42
 }`;
 
 function cardVersion() {
@@ -532,7 +532,9 @@ async function adminPage(env: Env, url: URL, state: Partial<Pick<AdminProps, "ta
   const tab = state.tab ?? ADMIN_TABS.find((name) => name === requested) ?? "drops";
   const [drops, tokens, stored] = await Promise.all([listDrops(env), listTokens(env.DROPS), loadSettings(env.DROPS)]);
   const adminDrops = drops.map((drop) => ({ ...drop, uploaded: drop.uploaded.toISOString() }));
-  const settings = { current: readConfig({ ...env, ...stored }), fromDeploy: readConfig(env), overridden: Object.keys(stored).length > 0 };
+  const samples = tab === "settings" ? await Promise.all(CODE_THEMES.map((theme) => highlightBlock(THEME_SAMPLE, "js", theme))) : [];
+  const themeSamples = Object.fromEntries(samples.map((html, index) => [CODE_THEMES[index], html]));
+  const settings = { current: readConfig({ ...env, ...stored }), fromDeploy: readConfig(env), overridden: Object.keys(stored).length > 0, themeSamples };
   return respond(<AdminPage {...state} saved={state.saved ?? url.searchParams.has("saved")} tab={tab} drops={adminDrops} tokens={tokens} settings={settings} origin={url.origin} />, status);
 }
 
@@ -613,14 +615,6 @@ async function route(request: Request, env: Env, context: ExecutionContext) {
     if (!(await admin())) throw new HttpError(401, "Sign in first.");
     await resetSettings(env.DROPS);
     return redirect("/admin?tab=settings&saved");
-  }
-
-  if (pathname === "/admin/theme-preview" && method === "GET") {
-    if (!(await admin())) throw new HttpError(401, "Sign in first.");
-    const requestedTheme = url.searchParams.get("theme");
-    const theme = CODE_THEMES.find((name) => name === requestedTheme);
-    if (!theme) throw new HttpError(400, "Unknown theme.");
-    return fragment(<div dangerouslySetInnerHTML={{ __html: await highlightBlock(THEME_SAMPLE, "ts", theme) }} />);
   }
 
   if (pathname === "/admin/logout" && method === "POST") {

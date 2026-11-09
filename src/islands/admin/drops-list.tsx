@@ -28,7 +28,7 @@ function DropRow({ drop, origin, now }: { drop: AdminDrop; origin: string; now: 
       <span className="flex justify-end max-md:hidden">{drop.uploader && <UploaderBadge uploader={drop.uploader} />}</span>
       <span className="text-right text-[0.8125rem] text-muted-foreground tabular-nums">{formatSize(drop.size)}</span>
       <span className="min-w-12 text-right text-[0.8125rem] text-muted-foreground tabular-nums max-md:hidden">{dayMonth(new Date(drop.uploaded))}</span>
-      <span className="flex gap-0.5 pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-hover/row:opacity-100 pointer-fine:group-focus-within/row:opacity-100">
+      <span className="flex gap-1 pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:group-hover/row:opacity-100 pointer-fine:group-focus-within/row:opacity-100">
         <CopyIconButton text={`${origin}/${drop.slug}`} label={`Copy link to ${drop.name}`} icon={<LinkIcon />} />
         <ConfirmForm
           action={`/admin/delete/${encodeURIComponent(drop.slug)}`}

@@ -152,8 +152,7 @@ check "accent applies" yes "$(curl -s "$JALCO_DROP_URL/nope" | contains '--marke
 check "home redirect applies" "https://example.com/" "$(curl -s -o /dev/null -w '%{redirect_url}' "$JALCO_DROP_URL/")"
 check "invalid settings are refused" 400 "$(settings -d name=x -d owner=y -d accent=red -d theme=vesper -d home=https://example.com/)"
 check "settings need the admin session" 401 "$(curl -s -o /dev/null -w '%{http_code}' -H "Origin: $JALCO_DROP_URL" -d name=x "$JALCO_DROP_URL/admin/settings")"
-check "theme preview needs the admin session" 401 "$(status "$JALCO_DROP_URL/admin/theme-preview?theme=vesper")"
-check "theme preview renders" yes "$(curl -s -b "$work/admin" "$JALCO_DROP_URL/admin/theme-preview?theme=nord" | contains 'shiki nord')"
+check "settings show every code theme" yes "$(curl -s -b "$work/admin" "$JALCO_DROP_URL/admin?tab=settings" | contains 'shiki nord')"
 check "settings reset" 303 "$(curl -s -o /dev/null -w '%{http_code}' -b "$work/admin" -H "Origin: $JALCO_DROP_URL" -X POST "$JALCO_DROP_URL/admin/settings/reset")"
 check "reset restores deploy values" no "$(curl -s "$JALCO_DROP_URL/nope" | contains 'Smoke Drop')"
 new_token() { curl -s -b "$work/admin" -H "Origin: $JALCO_DROP_URL" "$@" "$JALCO_DROP_URL/admin/tokens" | grep -o 'jd_[A-Za-z0-9_-]*' | head -1; }
