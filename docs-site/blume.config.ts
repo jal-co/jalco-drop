@@ -30,7 +30,6 @@ export default defineConfig({
   footer: {
     copyright: `© ${new Date().getFullYear()} Justin Levine. MIT licensed.`,
     links: [
-      { href: "https://scrawl.kitlangton.com", label: "Scrawl" },
     ],
   },
 });
