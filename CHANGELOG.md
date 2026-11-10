@@ -4,6 +4,8 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
+## 1.2.1 (2026-11-10)
+
 - Fixed: on a phone, the audio player on a Superwhisper transcript page collapsed to nothing, so the recording could not be played from its controls.
 
 ## 1.2.0 (2026-11-09)
