@@ -259,7 +259,12 @@ article.prose a.deploy-cloudflare svg {
   color: #f38020;
 }
 
-article.prose a.deploy-render {
+article.prose a.deploy-neon svg {
+  color: #00e599;
+}
+
+article.prose a.deploy-render,
+article.prose a.deploy-neon {
   background: oklch(1 0 0 / 6%);
   color: oklch(0.95 0 0);
   box-shadow: var(--drop-rim);
@@ -270,7 +275,8 @@ article.prose a.deploy-render {
     background: oklch(0.88 0 0);
   }
 
-  article.prose a.deploy-render:hover {
+  article.prose a.deploy-render:hover,
+  article.prose a.deploy-neon:hover {
     background: oklch(1 0 0 / 9%);
   }
 }
