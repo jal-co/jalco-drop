@@ -15,3 +15,10 @@ test("code pages fit the screen", async ({ page, request }) => {
   expect(overflow).toBeLessThanOrEqual(0);
   await expect(page.getByRole("button", { name: "File actions" })).toBeInViewport();
 });
+
+test("transcript pages keep their audio player on a phone", async ({ page, baseURL }) => {
+  const slug = cli(baseURL!, [fixture("superwhisper")]);
+  await open(page, `/${slug}`);
+  const box = await page.locator("audio").boundingBox();
+  expect(box?.height).toBeGreaterThan(30);
+});

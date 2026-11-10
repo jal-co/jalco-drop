@@ -26,7 +26,7 @@ export function TranscriptPlayer({ sender, title, details, audioUrl, segments, t
         {details.length > 0 && <p className="font-mono text-xs text-muted-foreground tabular-nums">{details.join("  /  ")}</p>}
       </header>
       <div className="sticky top-3 z-10 flex flex-col gap-3 rounded-3xl bg-card p-3 shadow-raised sm:flex-row sm:items-center">
-        <audio ref={audio} src={audioUrl} controls preload="metadata" onTimeUpdate={(event) => setNow(event.currentTarget.currentTime)} className="h-10 w-full min-w-0 flex-1" />
+        <audio ref={audio} src={audioUrl} controls preload="metadata" onTimeUpdate={(event) => setNow(event.currentTarget.currentTime)} className="h-10 w-full min-w-0 sm:flex-1" />
         <div className="flex shrink-0 gap-2">
           <CopyLabelButton text={text} label="Copy text" icon={<CopyIcon />} />
           <DownloadButton href={download.href} size={download.size} />
