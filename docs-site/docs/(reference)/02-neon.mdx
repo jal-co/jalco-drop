@@ -14,7 +14,7 @@ You need the Neon CLI (`npm install -g neon@latest`, then `neon login`) and a pr
 | | From the template | From this repo |
 | --- | --- | --- |
 | Start with | `neon functions new jalco-drop` in any Neon project | `npx jalco-drop init my-drop --target neon` |
-| Your code | One line: `export { default } from "jalco-drop/neon"` | The whole app, ready to change |
+| Your code | A short handler you own: settings, a `/health` route and a custom file format | The whole app, ready to change |
 | Upgrade | Bump `jalco-drop` in `package.json` | `npx jalco-drop upgrade` |
 | Pick it when | You want a drop site and won't touch the code | You want to customize formats, pages or styles |
 
@@ -28,7 +28,7 @@ neon link
 neon functions new jalco-drop
 ```
 
-This writes `functions/jalcodrop/index.ts`, adds the `jalcodrop` function to `neon.ts`, and installs `jalco-drop` from npm.
+This writes `functions/jalcodrop/index.ts`, adds the `jalcodrop` function to `neon.ts`, and installs `jalco-drop` from npm. `index.ts` is yours to edit: it calls `createDrop()` with your settings, answers `/health` with a storage check, and adds a format that tints errors and warnings in `.log` files.
 
 </Step>
 <Step title="Add the bucket and the cleanup trigger">
@@ -99,6 +99,33 @@ npm run deploy:neon
 
 </Step>
 </Steps>
+
+## The handler you own
+
+```ts functions/jalcodrop/index.ts
+import { createDrop, rawHtml, type TextFormat } from "jalco-drop/neon";
+
+const logs: TextFormat = {
+  id: "logs",
+  test: (name) => name.endsWith(".log"),
+  render: (text) => ({ mono: true, body: rawHtml(`<pre>${escape(text)}</pre>`) }),
+};
+
+const drop = createDrop({
+  adminToken: process.env.ADMIN_TOKEN!,
+  site: { owner: process.env.OWNER_NAME },
+  formats: [logs],
+});
+
+export default {
+  async fetch(request: Request) {
+    if (new URL(request.url).pathname === "/health") return Response.json(await drop.health());
+    return drop.fetch(request);
+  },
+};
+```
+
+`createDrop()` takes `adminToken`, `bucket`, `site` (`name`, `owner`, `accent`, `codeTheme`, `homeUrl`), `rateLimit` and `formats`, and returns `fetch` and `health()`. Formats render HTML through `rawHtml()`, so escape anything that comes from the file. The [formats guide](/file-types/custom) explains how formats are chosen.
 
 ## Settings
 

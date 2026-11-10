@@ -38,7 +38,8 @@
     "public/favicon.svg",
     "package-lock.json",
     "neon.ts",
-    "neon"
+    "neon",
+    "types"
   ],
   "engines": {
     "node": ">=22.18"
@@ -109,7 +110,10 @@
     }
   },
   "exports": {
-    "./neon": "./neon/index.mjs",
+    "./neon": {
+      "types": "./types/neon.d.ts",
+      "default": "./neon/index.mjs"
+    },
     "./package.json": "./package.json"
   }
 }

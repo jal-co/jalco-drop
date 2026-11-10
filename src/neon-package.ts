@@ -1,6 +1,9 @@
 import { contentTypeOf } from "./platform/node-runtime";
-import { createDropFunction } from "./neon-function";
+import { createDrop as createDropWith, optionsFromEnv, type DropOptions } from "./neon-function";
 import assets from "jalco-drop-assets";
+
+export { rawHtml, type DropOptions } from "./neon-function";
+export type { TextFormat } from "./formats/types";
 
 const files = new Map(Object.entries(assets).map(([path, base64]) => [path, Buffer.from(base64, "base64")]));
 
@@ -13,4 +16,10 @@ async function serveEmbedded(request: Request) {
   return new Response(request.method === "HEAD" ? null : body, { headers });
 }
 
-export default { fetch: createDropFunction(serveEmbedded) };
+export const createDrop = (options: DropOptions) => createDropWith(options, serveEmbedded);
+
+let fromEnv: ReturnType<typeof createDrop> | undefined;
+
+export default {
+  fetch: (request: Request) => (fromEnv ??= createDrop(optionsFromEnv())).fetch(request),
+};
