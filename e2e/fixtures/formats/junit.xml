@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="vitest" tests="5" failures="1" skipped="1" time="1.234">
+  <testsuite name="src/greet.test.ts" tests="3" failures="1" time="0.4">
+    <testcase classname="greet" name="says hello" time="0.012"/>
+    <testcase classname="greet" name="trims the name" time="0.020">
+      <failure message="expected &quot;Hello,  Tess!&quot; to be &quot;Hello, Tess!&quot;" type="AssertionError"><![CDATA[AssertionError: expected "Hello,  Tess!" to be "Hello, Tess!"
+    at src/greet.test.ts:9:30
+    <script>alert(1)</script>]]></failure>
+    </testcase>
+    <testcase classname="greet" name="handles emoji" time="0.004"><skipped/></testcase>
+  </testsuite>
+  <testsuite name="src/math.test.ts" tests="2" failures="0" time="0.1">
+    <testcase classname="math" name="adds" time="0.001"/>
+    <testcase classname="math" name="divides &amp; rounds" time="0.002"/>
+  </testsuite>
+</testsuites>

@@ -21,7 +21,7 @@ Uploads a file, a directory (zipped), a Scrawl capture, or stdin to your drop si
 "init" sets up a new drop site on your Cloudflare account.
 A .scrawl capture uploads only its video, frames, contact sheet and transcript, and expires after 30d unless -e is set.
 A Superwhisper recording folder uploads its audio and transcript, without the prompt or app context.
-A Claude Code or Pi session (.jsonl) uploads only the prompts, replies and a one-line summary of each tool call.
+A Claude Code, Codex or Pi session (.jsonl) uploads only the prompts, replies and a one-line summary of each tool call.
 
 Options:
   -p PASSWORD   require a password to open the drop
@@ -126,14 +126,25 @@ elif [[ -d "$target" && -f "$target/meta.json" ]] && jq -e '.segments and .durat
   (cd "$tmp" && zip -0qr "$note.zip" "$note")
   file="$tmp/$note.zip"
   name="${name:-$note.zip}"
-elif [[ -f "$target" && "$target" == *.jsonl ]] && head -n 20 "$target" | jq -enR '[inputs | fromjson?] | any(.[]; (.type == "session" and (.version | type) == "number") or ((.sessionId | type) == "string" and (.message | type) == "object"))' >/dev/null 2>&1; then
+elif [[ -f "$target" && "$target" == *.jsonl ]] && head -n 20 "$target" | jq -enR '[inputs | fromjson?] | any(.[]; (.type == "session" and (.version | type) == "number") or (.type == "session_meta" and (.payload | type) == "object") or ((.sessionId | type) == "string" and (.message | type) == "object"))' >/dev/null 2>&1; then
   tmp="$(mktemp -d)"
   file="$tmp/$(basename "$target")"
   jq -cR 'def brief: if type == "object" then . as $input | ((["command", "file_path", "path", "pattern", "url", "query", "description"] | map(select(($input[.] | type) == "string")) | first) // ([to_entries[] | select(.value | type == "string") | .key] | first)) as $key | if $key then {($key): ($input[$key] | split("\n")[0] | .[0:160])} else {} end else {} end;
     def clean: gsub("(?s)<system-reminder>.*?</system-reminder>"; "");
     def blocks(keep): if type == "string" then [{type: "text", text: clean}] else [.[]? | keep] end;
+    def line: tostring | split("\n")[0] | .[0:160];
+    def codexargs: (fromjson? // {}) | if (.command | type) == "array" then {command: (.command | last | line)} else brief end | tojson;
+    def codexfailed: (.output | if type == "string" then (fromjson? // .) else . end) as $out | if ($out | type) == "object" and ($out.metadata.exit_code | type) == "number" then $out.metadata.exit_code != 0 else (($out | if type == "object" then .output else . end) | tostring | test("^(Exit code:|Process exited with code) *[1-9]"; "m")) end;
+    def codexcontext: test("^\\s*(<environment_context>|<user_instructions>|<permissions instructions>|<user_shell_command>|# AGENTS\\.md instructions)");
     fromjson? |
     if .type == "session" then {type, version}
+    elif .type == "session_meta" then {type, payload: {cli_version: .payload.cli_version}}
+    elif .type == "turn_context" then {type, payload: {model: .payload.model}}
+    elif .type == "response_item" and .payload.type == "message" and (.payload.role == "user" or .payload.role == "assistant") then {type, payload: {type: "message", role: .payload.role, content: [.payload.content[]? | select((.type == "input_text" or .type == "output_text") and (.text | codexcontext | not)) | {type, text: (.text | clean)}]}}
+    elif .type == "response_item" and .payload.type == "function_call" then {type, payload: {type: .payload.type, name: .payload.name, call_id: .payload.call_id, arguments: (.payload.arguments | codexargs)}}
+    elif .type == "response_item" and .payload.type == "custom_tool_call" then {type, payload: {type: .payload.type, name: .payload.name, call_id: .payload.call_id, input: (.payload.input | line)}}
+    elif .type == "response_item" and .payload.type == "local_shell_call" then {type, payload: {type: .payload.type, call_id: .payload.call_id, action: {command: [(.payload.action.command | last | line)]}}}
+    elif .type == "response_item" and (.payload.type == "function_call_output" or .payload.type == "custom_tool_call_output") then {type, payload: {type: .payload.type, call_id: .payload.call_id, failed: (.payload | codexfailed)}}
     elif .type == "message" and .message.role == "toolResult" then {type, message: {role: "toolResult", toolCallId: .message.toolCallId, isError: .message.isError}}
     elif .type == "message" and (.message.role == "user" or .message.role == "assistant") then {type, message: {role: .message.role, model: .message.model, content: (.message.content | blocks(if .type == "text" then {type, text: (.text | clean)} elif .type == "toolCall" then {type, id, name, arguments: (.arguments | brief)} else empty end))}}
     elif (.type == "user" or .type == "assistant") and (.message | type) == "object" and .isSidechain != true and .isMeta != true then {type, sessionId, message: {role: .message.role, model: .message.model, content: (.message.content | blocks(if .type == "text" then {type, text: (.text | clean)} elif .type == "tool_use" then {type, id, name, input: (.input | brief)} elif .type == "tool_result" then {type, tool_use_id, is_error} else empty end))}}

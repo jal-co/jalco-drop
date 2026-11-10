@@ -1,13 +1,13 @@
 ---
 title: Agent sessions
-description: Share a Claude Code or Pi session as a readable conversation, without its thinking or tool output.
+description: Share a Claude Code, Codex or Pi session as a readable conversation, without its thinking or tool output.
 sidebar:
   label: Agent sessions
 ---
 
 Coding agents save every session as a `.jsonl` file. jalco-drop opens one as the conversation it was: your prompts, the agent's replies rendered as markdown, and one line for each tool call with the command or file it touched. Failed tool calls are marked. A link like this shows a colleague how the agent got somewhere, not only where it ended up.
 
-It reads sessions from Claude Code (`~/.claude/projects/`) and Pi (`~/.pi/agent/sessions/`).
+It reads sessions from Claude Code (`~/.claude/projects/`), Codex (`~/.codex/sessions/`) and Pi (`~/.pi/agent/sessions/`). For Codex, the CLI also leaves out the environment context, permission notes and AGENTS.md instructions Codex adds to every turn.
 
 Pass the session file to the CLI:
 

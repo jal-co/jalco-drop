@@ -1,5 +1,6 @@
 import { renderMarkdown } from "@/markdown";
 import type { Json } from "./types";
+import { asNumber, isText, parseJson } from "./json-value";
 
 type Entry = { [key: string]: Json };
 
@@ -7,7 +8,7 @@ export type SessionItem =
   | { kind: "user" | "assistant"; text: string }
   | { kind: "tool"; id: string; name: string; summary: string; failed: boolean };
 
-export type Session = { agent: "Claude Code" | "Pi"; model?: string; items: SessionItem[] };
+export type Session = { agent: "Claude Code" | "Pi" | "Codex"; model?: string; items: SessionItem[] };
 
 const SUMMARY_KEYS = ["command", "file_path", "path", "pattern", "url", "query", "description"];
 const MAX_SUMMARY = 160;
@@ -75,8 +76,51 @@ function fromPi(records: Entry[]): Session {
   return { agent: "Pi", model, items };
 }
 
+const CODEX_CONTEXT = /^(<environment_context>|<user_instructions>|<permissions instructions>|<user_shell_command>|# AGENTS\.md instructions)/;
+const EXIT_CODE = /^(?:Exit code:|Process exited with code) *([0-9]+)/m;
+
+function codexSummary(payload: Entry) {
+  if (isEntry(payload.action) && Array.isArray(payload.action.command)) return summarizeInput({ command: asText(payload.action.command.at(-1)) });
+  const input = isText(payload.arguments) ? parseJson(payload.arguments) : isText(payload.input) ? { input: payload.input } : undefined;
+  if (isEntry(input) && Array.isArray(input.command)) return summarizeInput({ command: asText(input.command.at(-1)) });
+  return summarizeInput(input);
+}
+
+function codexFailed(payload: Entry) {
+  if (payload.failed === true || payload.failed === false) return payload.failed;
+  const output = isText(payload.output) ? (parseJson(payload.output) ?? payload.output) : payload.output;
+  const exitCode = isEntry(output) && isEntry(output.metadata) ? asNumber(output.metadata.exit_code, -1) : -1;
+  if (exitCode >= 0) return exitCode !== 0;
+  const code = EXIT_CODE.exec(isEntry(output) ? asText(output.output) : asText(output))?.[1];
+  return code !== undefined && code !== "0";
+}
+
+function fromCodex(records: Entry[]): Session {
+  const items: SessionItem[] = [];
+  let model: string | undefined;
+  for (const record of records) {
+    const payload = record.payload;
+    if (!isEntry(payload)) continue;
+    if (record.type === "turn_context" && isText(payload.model)) model = payload.model;
+    if (record.type !== "response_item") continue;
+    if (payload.type === "message" && (payload.role === "user" || payload.role === "assistant")) {
+      for (const block of blocksOf(payload.content)) {
+        const text = asText(block.text);
+        if (payload.role === "user" && CODEX_CONTEXT.test(text.trimStart())) continue;
+        if (block.type === "input_text" || block.type === "output_text" || block.type === "text") pushText(items, payload.role, text);
+      }
+    } else if (payload.type === "function_call" || payload.type === "custom_tool_call" || payload.type === "local_shell_call") {
+      items.push({ kind: "tool", id: asText(payload.call_id), name: asText(payload.name) || "shell", summary: codexSummary(payload), failed: false });
+    } else if ((payload.type === "function_call_output" || payload.type === "custom_tool_call_output") && codexFailed(payload)) {
+      markFailed(items, asText(payload.call_id));
+    }
+  }
+  return { agent: "Codex", model, items };
+}
+
 export function parseSession(records: Entry[]): Session | null {
   const [first] = records;
+  if (first?.type === "session_meta" && isEntry(first.payload)) return fromCodex(records);
   if (first?.type === "session" && typeof first.version === "number") return fromPi(records);
   const claudeCode = records.some((record) => typeof record.sessionId === "string" && (record.type === "user" || record.type === "assistant") && isEntry(record.message));
   return claudeCode ? fromClaudeCode(records) : null;

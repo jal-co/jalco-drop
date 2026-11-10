@@ -4,6 +4,12 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
+- Diffs and patches open as a per-file view with line numbers and an index.
+- JUnit XML and Playwright JSON reports open with failures first.
+- Excalidraw and tldraw files open as the drawing.
+- Codex sessions open as a conversation, trimmed by the CLI like Claude Code and Pi sessions.
+- A file that matches more than one format tries each in turn, so a plain `.json` still opens as a tree.
+
 ## 1.3.0 (2026-11-10)
 
 - `createDrop()` and `rawHtml()` from `jalco-drop/neon`, with types: configure the Neon Function in code, add routes, check storage with `health()`, and add your own file formats. The Neon template now ships a handler you own, with a `/health` route and a `.log` format.

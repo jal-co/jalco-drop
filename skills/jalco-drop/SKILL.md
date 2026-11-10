@@ -51,6 +51,7 @@ A `401` means the drop has a password. Ask the user for it and send it as an `X-
    - A Superwhisper recording: pass the folder from `~/superwhisper/recordings/`. The CLI converts the audio and keeps only the transcript, leaving the prompt and app context behind.
    - A Claude Code or Pi session: pass the `.jsonl` file. The CLI keeps the prompts, replies and one line per tool call, and drops thinking and tool output. Prompts and tool commands still upload as written, so scan them for secrets first.
    - Command output with colours: run the command with `FORCE_COLOR=1` and pipe it in with `-n <name>.log`, so the page keeps its colours.
+   - A Claude Code, Codex or Pi session (`.jsonl`): pass the file. The CLI keeps prompts, replies and one line per tool call.
    - Generated text, a diff or command output: pipe it on stdin with `-n` and a real extension, such as `-n fix.diff`. The extension picks the highlighting.
 2. Scan it for secrets (see the constraints).
 3. Pick who can open it.

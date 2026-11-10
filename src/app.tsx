@@ -9,7 +9,7 @@ import { CardPage } from "./pages/card";
 import { DropPage, type Preview } from "./pages/drop";
 import { EntryPreview, type EntryPreviewData } from "./pages/entry";
 import { ErrorPage, NotFoundPage } from "./pages/message";
-import { BUNDLE_FORMATS, textFormatFor, type LoadedBundle } from "./formats";
+import { BUNDLE_FORMATS, renderText, textFormatsFor, type LoadedBundle } from "./formats";
 import { SharePage } from "./pages/share";
 import type { AdminProps } from "./islands/admin/types";
 import { commonRoot, formatSize } from "./view/format";
@@ -73,7 +73,7 @@ const SVG_NAME = /\.svg$/i;
 const PDF_CSP = "default-src 'none'; frame-ancestors 'self'";
 const SVG_CSP = "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:";
 const BYTE_RANGE = /^bytes=(\d*)-(\d*)$/;
-const TEXT_EXTENSION = /\.(md|mdx|txt|json|jsonc|ya?ml|toml|ts|tsx|js|jsx|mjs|cjs|css|html|sh|zsh|py|rs|go|rb|swift|sql|env|ini|conf|log|csv|xml|svg)$/i;
+const TEXT_EXTENSION = /\.(md|mdx|txt|json|jsonc|ya?ml|toml|ts|tsx|js|jsx|mjs|cjs|css|html|sh|zsh|py|rs|go|rb|swift|sql|env|ini|conf|log|csv|xml|svg|diff|patch|excalidraw|tldr)$/i;
 
 class HttpError extends Error {
   constructor(readonly status: number, message: string) {
@@ -330,10 +330,10 @@ async function serveRaw(env: Env, object: ObjectInfo, request: Request, download
 
 async function textPreview(drop: Drop, text: string, source: boolean): Promise<Preview> {
   const { lines } = describeText(drop.name, text);
-  const format = textFormatFor(drop.name);
-  const view = format && !source ? await format.render(text, { name: drop.name, renderHref: `/${drop.slug}/${encodeURIComponent(drop.name)}?render=1`, surface: "page" }) : null;
+  const hasFormat = textFormatsFor(drop.name).length > 0;
+  const view = hasFormat && !source ? await renderText(drop.name, text, { name: drop.name, renderHref: `/${drop.slug}/${encodeURIComponent(drop.name)}?render=1`, surface: "page" }) : null;
   if (view) return { kind: "rendered", lines, ...view };
-  return { kind: "code", html: (await highlight(drop.name, text)).html, lines, renderable: Boolean(format) && source };
+  return { kind: "code", html: (await highlight(drop.name, text)).html, lines, renderable: hasFormat && source };
 }
 
 async function serveDrop(env: Env, object: ObjectInfo, origin: string, source: boolean) {
@@ -497,11 +497,11 @@ async function entryPreview(env: Env, object: ObjectInfo, entry: ZipEntry): Prom
   if (!canExtract(entry)) return { kind: "note", text: "This file is encrypted or uses a compression method the preview cannot read. Download the zip to open it." };
   const media = mediaOf(entry.path);
   if (media) return { kind: media.kind, url: rawHref };
-  const format = textFormatFor(entry.path);
-  if (!format && !isTextName(entry.path) && extension) return { kind: "note", text: "No preview for this file." };
+  const hasFormat = textFormatsFor(entry.path).length > 0;
+  if (!hasFormat && !isTextName(entry.path) && extension) return { kind: "note", text: "No preview for this file." };
   if (entry.size > TEXT_PREVIEW_BYTES) return { kind: "note", text: "This file is too large to preview." };
   const text = await new Response(await openEntry(env.DROPS, object.key, entry)).text();
-  const view = format ? await format.render(text, { name: entry.path.split("/").pop() ?? entry.path, renderHref: `${rawHref}&render=1`, surface: "drawer" }) : null;
+  const view = hasFormat ? await renderText(entry.path, text, { name: entry.path.split("/").pop() ?? entry.path, renderHref: `${rawHref}&render=1`, surface: "drawer" }) : null;
   if (view) return { kind: "rendered", body: view.body };
   return { kind: "code", html: (await highlight(entry.path, text)).html };
 }

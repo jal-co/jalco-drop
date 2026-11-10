@@ -1,0 +1,11 @@
+{"timestamp":"2026-11-09T10:00:00Z","type":"session_meta","payload":{"id":"s1","cwd":"/Users/tess/secret-project","cli_version":"0.165.0","base_instructions":{"text":"You are Codex"}}}
+{"timestamp":"2026-11-09T10:00:01Z","type":"turn_context","payload":{"cwd":"/Users/tess/secret-project","model":"gpt-5.5-codex"}}
+{"timestamp":"2026-11-09T10:00:01Z","type":"response_item","payload":{"type":"message","role":"developer","content":[{"type":"input_text","text":"<permissions instructions>sandboxed</permissions instructions>"}]}}
+{"timestamp":"2026-11-09T10:00:02Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"<environment_context>\n  <cwd>/Users/tess/secret-project</cwd>\n</environment_context>"}]}}
+{"timestamp":"2026-11-09T10:00:03Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"Why does the build fail?"}]}}
+{"timestamp":"2026-11-09T10:00:04Z","type":"response_item","payload":{"type":"reasoning","summary":[],"encrypted_content":"gAAAA"}}
+{"timestamp":"2026-11-09T10:00:05Z","type":"response_item","payload":{"type":"function_call","name":"shell","arguments":"{\"command\":[\"bash\",\"-lc\",\"npm run build\"],\"workdir\":\"/Users/tess/secret-project\"}","call_id":"call_1"}}
+{"timestamp":"2026-11-09T10:00:06Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call_1","output":"{\"output\":\"error TS2304: Cannot find name 'greet'. SECRET_OUTPUT\",\"metadata\":{\"exit_code\":2}}"}}
+{"timestamp":"2026-11-09T10:00:07Z","type":"response_item","payload":{"type":"custom_tool_call","name":"apply_patch","input":"*** Begin Patch\n*** Update File: src/index.ts\n+import { greet } from './greet';","call_id":"call_2"}}
+{"timestamp":"2026-11-09T10:00:08Z","type":"response_item","payload":{"type":"custom_tool_call_output","call_id":"call_2","output":"Exit code: 0\nOutput: Success"}}
+{"timestamp":"2026-11-09T10:00:09Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"The build failed because `greet` was **never imported**. I added the import."}]}}
