@@ -1,0 +1,18 @@
+---
+title: Superwhisper notes
+description: Share a Superwhisper recording as a transcript page that plays the audio and names each speaker.
+sidebar:
+  label: Superwhisper
+---
+
+<img className="drop-video" src="/videos/meeting.jpg" alt="A Superwhisper meeting transcript: Justin sent you Meeting notes, 2:34 with 3 speakers, an audio player, and timestamped lines from Justin, Jeff and Priya, with the line at 0:29 highlighted" />
+
+[Superwhisper](https://superwhisper.com) transcribes what you say, on your Mac. jalco-drop turns a recording into a page anyone can open: the audio on top, and the transcript below with every line timestamped. Clicking a line jumps the audio there, the line being spoken stays highlighted, and meetings show who said what.
+
+Pass a recording folder from `~/superwhisper/recordings/` to the CLI. It converts the audio to m4a with `ffmpeg` so every browser can play it, and keeps only the transcript, segments, speakers, duration and date. The prompt and the app context Superwhisper saved alongside the recording stay on your machine.
+
+```bash
+jalco-drop ~/superwhisper/recordings/1794258373
+```
+
+Agents read the same note as JSON: add `?format=json` to the link for its `text`, `speakers` and `segments`. See [Agents](/v1.2/agents).

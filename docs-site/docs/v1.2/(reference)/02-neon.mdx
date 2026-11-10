@@ -1,0 +1,167 @@
+---
+title: Deploy on Neon
+description: Run jalco-drop as a Neon Function with a Neon bucket and an hourly cleanup trigger, from the template or from this repo.
+sidebar:
+  label: Neon
+---
+
+[Neon Functions](https://neon.com/docs/compute/functions/overview) run jalco-drop as one long-running function next to a Neon Object Storage bucket. A schedule trigger deletes expired drops every hour. Everything is declared in `neon.ts`, so one `neon deploy` creates it all.
+
+You need the Neon CLI (`npm install -g neon@latest`, then `neon login`) and a project in a region with Functions and Object Storage: AWS `us-east-1`, `us-east-2`, `eu-central-1` or `ap-southeast-1`.
+
+## Two ways in
+
+| | From the template | From this repo |
+| --- | --- | --- |
+| Start with | `neon functions new jalco-drop` in any Neon project | `npx jalco-drop init my-drop --target neon` |
+| Your code | A short handler you own: settings, a `/health` route and a custom file format | The whole app, ready to change |
+| Upgrade | Bump `jalco-drop` in `package.json` | `npx jalco-drop upgrade` |
+| Pick it when | You want a drop site and won't touch the code | You want to customize formats, pages or styles |
+
+## From the template
+
+<Steps>
+<Step title="Scaffold it">
+
+```bash
+neon link
+neon functions new jalco-drop
+```
+
+This writes `functions/jalcodrop/index.ts`, adds the `jalcodrop` function to `neon.ts`, and installs `jalco-drop` from npm. `index.ts` is yours to edit: it calls `createDrop()` with your settings, answers `/health` with a storage check, and adds a format that tints errors and warnings in `.log` files.
+
+</Step>
+<Step title="Add the bucket and the cleanup trigger">
+
+Add these to `neon.ts`, next to `functions`:
+
+```ts neon.ts
+buckets: {
+  drops: {},
+},
+triggers: {
+  cleanup: {
+    type: "schedule",
+    function: "jalcodrop",
+    cron: "0 * * * *",
+    functionPath: "/__scheduled",
+  },
+},
+```
+
+:::note
+Neon CLI 9.3.2 writes every setting the template declares as required (`process.env.OWNER_NAME!` and so on). Only `ADMIN_TOKEN` is. Either set them all in `.env.local`, or change the optional ones to `{ value: process.env.OWNER_NAME, required: false }`.
+:::
+
+</Step>
+<Step title="Set the admin token">
+
+```bash
+echo "ADMIN_TOKEN=$(openssl rand -base64 32)" >> .env.local
+```
+
+Save it in a password manager: it signs in to `/admin` and the upload API.
+
+</Step>
+<Step title="Deploy">
+
+```bash
+neon config plan --env .env.local
+neon deploy --env .env.local
+```
+
+The plan should list the `drops` bucket, the `jalcodrop` function and the `cleanup` trigger. The deploy prints the function's URL; `neon functions get jalcodrop` shows it again.
+
+</Step>
+</Steps>
+
+## From this repo
+
+<Steps>
+<Step title="Create the project">
+
+```bash
+npx jalco-drop init my-drop --target neon
+```
+
+Setup writes `.env` with a fresh admin token. Add `--domain drop.example.com` to serve from your own hostname.
+
+</Step>
+<Step title="Deploy">
+
+```bash
+cd my-drop
+neon link
+npm run deploy:neon
+```
+
+`npm run deploy:neon` builds `dist/neon` (the function plus its static files) and runs `neon deploy --env .env`. The repo's `neon.ts` already declares the bucket and trigger; the function's slug is `drop`.
+
+</Step>
+</Steps>
+
+## The handler you own
+
+```ts functions/jalcodrop/index.ts
+import { createDrop, rawHtml, type TextFormat } from "jalco-drop/neon";
+
+const logs: TextFormat = {
+  id: "logs",
+  test: (name) => name.endsWith(".log"),
+  render: (text) => ({ mono: true, body: rawHtml(`<pre>${escape(text)}</pre>`) }),
+};
+
+const drop = createDrop({
+  adminToken: process.env.ADMIN_TOKEN!,
+  site: { owner: process.env.OWNER_NAME },
+  formats: [logs],
+});
+
+export default {
+  async fetch(request: Request) {
+    if (new URL(request.url).pathname === "/health") return Response.json(await drop.health());
+    return drop.fetch(request);
+  },
+};
+```
+
+`createDrop()` takes `adminToken`, `bucket`, `site` (`name`, `owner`, `accent`, `codeTheme`, `homeUrl`), `rateLimit` and `formats`, and returns `fetch` and `health()`. Formats render HTML through `rawHtml()`, so escape anything that comes from the file. The [formats guide](/v1.2/file-types/custom) explains how formats are chosen.
+
+## Settings
+
+| Variable | | |
+| --- | --- | --- |
+| `ADMIN_TOKEN` | required | Signs in to `/admin` and the API, and signs session and unlock cookies |
+| `OWNER_NAME`, `SITE_NAME`, `ACCENT_COLOR`, `CODE_THEME`, `HOME_URL` | optional | Starting [settings](/v1.2/settings). You can change them later in `/admin` without redeploying |
+| `DROPS_BUCKET` | optional | The bucket drops are stored in. Defaults to `drops` |
+| `RATE_LIMIT` | optional | `off` disables the limit of 60 requests a minute per IP |
+
+Neon injects the bucket's `AWS_*` credentials itself. Values are read when you run `neon deploy`, so redeploy after changing one.
+
+## Your own domain
+
+Add `customDomains` to the function in `neon.ts`, deploy, then follow Neon's [custom domains guide](https://neon.com/docs/compute/functions/custom-domains) for the DNS record. With the repo's `neon.ts`, set `DROP_DOMAIN` in `.env` instead.
+
+```ts neon.ts
+jalcodrop: {
+  // ...
+  customDomains: ["drop.example.com"],
+},
+```
+
+## How cleanup works
+
+The `cleanup` trigger POSTs to `/__scheduled` at the top of every hour, and jalco-drop deletes drops whose expiry has passed. The route only runs when the request carries Neon's `X-Neon-Trigger-Invocation-Id` header, which Neon strips from outside requests, so anyone else gets a `401`. Expired drops stop being served the moment they expire, before cleanup runs.
+
+Check that it ran:
+
+```bash
+neon triggers list
+neon logs query --source function --service-name neon-function/jalcodrop
+```
+
+## Limits
+
+- **10 MB uploads.** Neon rejects any request body over 10 MiB before it reaches jalco-drop, so that is the largest single drop. Use Cloudflare (100 MB) or Docker for bigger files.
+- **No rendered link previews.** Neon has no headless browser, so shared links show a summary card instead of the rendered image.
+- **Rate limiting is per instance.** The 60-a-minute limit is kept in memory, so it resets when the function restarts.

@@ -1,0 +1,39 @@
+---
+title: File types
+sidebar:
+  label: Overview
+description: How each kind of file opens, and how to get at the raw bytes.
+---
+
+<video className="drop-video" src="/videos/formats.mp4" poster="/videos/formats.jpg" controls muted playsInline preload="none" aria-label="A markdown file with frontmatter, a CSV as a table, and a diff, each opening in jalco-drop" />
+
+| Upload | Opens as |
+| --- | --- |
+| Code and text (about 70 languages) | Highlighted in your [code theme](/v1.2/settings), with line links like `#L12` |
+| Terminal output | In colour: any text with terminal colour codes keeps the colours it had |
+| JSON | A tree you can fold, open two levels deep |
+| JSON Lines (`.jsonl`, `.ndjson`) | A table, one row per line |
+| [Claude Code and Pi sessions](/v1.2/file-types/agent-sessions) | The conversation: prompts, replies and one line per tool call |
+| Markdown | A rendered document; frontmatter shows as a properties list |
+| HTML | The page, running in a sandboxed frame |
+| CSV and TSV | A table with sticky headers |
+| SVG | An image, rendered in a sandbox |
+| Images | A centred preview |
+| Video and audio | A player that seeks by byte range |
+| PDF | The browser's PDF viewer |
+| Zips and folders | A [share page](/v1.2/file-types/folders) |
+| [Scrawl](https://scrawl.kitlangton.com) captures | A [recording page](/v1.2/file-types/scrawl) |
+| [Superwhisper](https://superwhisper.com) recordings | A [transcript page](/v1.2/file-types/superwhisper): audio on top, each line a timestamp that seeks it, speakers named |
+| Anything else | A download page |
+
+Markdown, HTML, CSV, SVG, JSON and JSON Lines have a **Source** view at `?view=source`. Every drop's raw bytes are at `/<slug>/<filename>`, with `?download=1` to force a download. Raw HTML and SVG are always served as plain text or in a sandbox, so a drop can never run script on your domain.
+
+Most tools drop their colours when their output is piped. Ask for them to keep the colours in what you send:
+
+```bash
+FORCE_COLOR=1 npm test 2>&1 | jalco-drop -n test.log
+```
+
+The `...` button in the top-right holds every action for a file. Right-click anywhere for the same actions as a pie menu.
+
+Every format lives in `src/formats/`, so you can [add your own](/v1.2/file-types/custom).

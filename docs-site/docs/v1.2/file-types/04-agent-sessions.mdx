@@ -1,0 +1,34 @@
+---
+title: Agent sessions
+description: Share a Claude Code or Pi session as a readable conversation, without its thinking or tool output.
+sidebar:
+  label: Agent sessions
+---
+
+Coding agents save every session as a `.jsonl` file. jalco-drop opens one as the conversation it was: your prompts, the agent's replies rendered as markdown, and one line for each tool call with the command or file it touched. Failed tool calls are marked. A link like this shows a colleague how the agent got somewhere, not only where it ended up.
+
+It reads sessions from Claude Code (`~/.claude/projects/`) and Pi (`~/.pi/agent/sessions/`).
+
+Pass the session file to the CLI:
+
+```bash
+jalco-drop -e 7d ~/.claude/projects/<project>/<session>.jsonl
+```
+
+## What leaves your machine
+
+A raw session holds far more than the conversation: the model's thinking, the full output of every tool call, file contents, images, token counts and your working directory. Before uploading, the CLI rewrites the file to keep only:
+
+- your prompts and the agent's replies, with system reminders removed
+- each tool call's name and one line of its input: the command, path, pattern, URL or query
+- whether each tool call failed
+
+Everything else stays on your machine, and the raw bytes at `/<slug>/<file>` are the trimmed file, not the original. A 5 MB session is usually under 200 KB after trimming.
+
+The one-line tool inputs and your prompts are still uploaded as written, so read the session before you send it. A command with a token in it is still a token.
+
+A session uploaded another way, such as through the admin or the API, is not trimmed. The page still hides thinking and tool output, but the raw file has everything.
+
+## Other JSON Lines files
+
+A `.jsonl` or `.ndjson` file that isn't a session opens as a table, one row per line and a column per field. Nested values show as JSON in their cell.

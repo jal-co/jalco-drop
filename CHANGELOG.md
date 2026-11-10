@@ -4,6 +4,8 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
+## 1.3.0 (2026-11-10)
+
 - `createDrop()` and `rawHtml()` from `jalco-drop/neon`, with types: configure the Neon Function in code, add routes, check storage with `health()`, and add your own file formats. The Neon template now ships a handler you own, with a `/health` route and a `.log` format.
 
 ## 1.2.1 (2026-11-10)
