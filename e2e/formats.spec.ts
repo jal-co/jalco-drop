@@ -9,8 +9,9 @@ test("diffs open as a file list with added and removed lines", async ({ page, re
   await open(page, `/${slug}`);
   await expect(page.getByText("4 files changed")).toBeVisible();
   await expect(page.locator(".diff-file")).toHaveCount(4);
-  await expect(page.locator(".diff-add").first()).toContainText("const trimmed");
-  await expect(page.locator(".diff-del").first()).toContainText('return "Hello "');
+  await expect(page.locator("diffs-container")).toHaveCount(3);
+  await expect(page.locator("diffs-container").first()).toContainText("const trimmed");
+  await expect(page.locator("diffs-container").first()).toContainText('return "Hello "');
   await expect(page.locator(".diff-status[data-status=renamed]")).toBeVisible();
   await expect(page.locator("script", { hasText: "alert(1)" })).toHaveCount(0);
 });

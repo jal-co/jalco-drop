@@ -1079,3 +1079,37 @@ nav[aria-label="Pagination"] a svg {
     color: oklch(0.85 0 0);
   }
 }
+
+.type-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1.5rem 1rem;
+  margin: 0 0 2rem;
+}
+
+.type-gallery figure {
+  margin: 0;
+}
+
+article.prose .type-gallery img {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.625rem;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 0.75rem;
+  box-shadow: var(--drop-rim);
+}
+
+.type-gallery figcaption {
+  color: oklch(0.68 0 0);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.type-gallery figcaption strong {
+  display: block;
+  color: oklch(0.95 0 0);
+  font-weight: 500;
+}

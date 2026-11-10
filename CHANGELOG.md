@@ -4,10 +4,12 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
-- Diffs and patches open as a per-file view with line numbers and an index.
+- Diffs and patches open as a per-file view with an index, rendered by [Pierre Diffs](https://diffs.com): syntax colours, word-level changes and collapsed context.
 - JUnit XML and Playwright JSON reports open with failures first.
 - Excalidraw and tldraw files open as the drawing.
 - Codex sessions open as a conversation, trimmed by the CLI like Claude Code and Pi sessions.
+- The docs show a screenshot of every file type.
+- Fixed: picking a chapter in the docs demo restarted the narration instead of jumping to that chapter.
 - A file that matches more than one format tries each in turn, so a plain `.json` still opens as a tree.
 
 ## 1.3.0 (2026-11-10)

@@ -1,3 +1,5 @@
+import { preloadPatchFile } from "@pierre/diffs/ssr";
+import { site } from "@/view/site";
 import type { TextFormat } from "./types";
 
 type DiffLine = { kind: "add" | "del" | "ctx" | "note"; text: string; old?: number; new?: number };
@@ -89,7 +91,7 @@ export function parseDiff(text: string): FileDiff[] {
 const pathOf = (file: FileDiff) => (file.status === "deleted" ? file.from : file.to);
 const STATUS_LABEL = { added: "Added", deleted: "Deleted", renamed: "Renamed", modified: "Modified" };
 
-function FileSection({ file, index }: { file: FileDiff; index: number }) {
+function FileSection({ file, index, pierre }: { file: FileDiff; index: number; pierre?: string }) {
   return (
     <section className="diff-file" id={`file-${index + 1}`}>
       <header className="diff-file-header">
@@ -99,6 +101,8 @@ function FileSection({ file, index }: { file: FileDiff; index: number }) {
       </header>
       {file.binary ? (
         <p className="diff-note">Binary file, not shown.</p>
+      ) : pierre ? (
+        <div className="diff-pierre" dangerouslySetInnerHTML={{ __html: `<diffs-container><template shadowrootmode="open">${pierre}</template></diffs-container>` }} />
       ) : (
         <table className="diff-table">
           {file.hunks.map((hunk, hunkIndex) => (
@@ -121,13 +125,24 @@ function FileSection({ file, index }: { file: FileDiff; index: number }) {
   );
 }
 
+async function renderWithPierre(patch: string) {
+  try {
+    const files = await preloadPatchFile({ patch, options: { theme: site.codeTheme, themeType: "dark", diffStyle: "unified", disableFileHeader: true, overflow: "scroll" } });
+    return new Map(files.map((file) => [file.fileDiff.name, file.prerenderedHTML]));
+  } catch (error) {
+    console.error("Pierre could not render this diff; using the plain view.", error);
+    return new Map<string, string>();
+  }
+}
+
 export const diff: TextFormat = {
   id: "diff",
   test: (name) => /\.(diff|patch)$/i.test(name),
-  render(text, { surface }) {
+  async render(text, { surface }) {
     const files = parseDiff(text);
     const lines = files.reduce((total, file) => total + file.hunks.reduce((sum, hunk) => sum + hunk.lines.length, 0), 0);
     if (!files.length || lines > MAX_LINES) return null;
+    const rendered = await renderWithPierre(text);
     const additions = files.reduce((total, file) => total + file.additions, 0);
     const deletions = files.reduce((total, file) => total + file.deletions, 0);
     return {
@@ -149,7 +164,7 @@ export const diff: TextFormat = {
               </ol>
             )}
           </header>
-          {files.map((file, index) => <FileSection key={index} file={file} index={index} />)}
+          {files.map((file, index) => <FileSection key={index} file={file} index={index} pierre={rendered.get(pathOf(file))} />)}
         </div>
       ),
     };

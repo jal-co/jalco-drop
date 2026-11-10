@@ -1362,3 +1362,12 @@
   font-size: 0.75rem;
   text-align: center;
 }
+
+.diff-pierre diffs-container {
+  display: block;
+  --diffs-font-family: var(--font-mono);
+  --diffs-font-size: 0.8125rem;
+  --diffs-line-height: 1.6;
+  --diffs-bg: var(--card);
+  --diffs-bg-separator: var(--fill);
+}

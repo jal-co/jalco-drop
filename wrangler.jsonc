@@ -1,6 +1,7 @@
 {
   "name": "jalco-drop",
   "main": "src/worker.ts",
+  "alias": { "shiki/langs": "./src/platform/shiki-langs.ts" },
   "compatibility_date": "2026-10-07",
   "workers_dev": true,
   "preview_urls": false,

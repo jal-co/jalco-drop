@@ -250,9 +250,22 @@ function Subtitles({ t }: { t: number }) {
 function useNarration(t: number, playing: boolean, sound: boolean, run: number) {
   const voice = useRef<HTMLAudioElement>(undefined);
   useEffect(() => {
-    voice.current = new Audio("/demo/narration.mp3");
-    voice.current.preload = "auto";
-    return () => voice.current?.pause();
+    const clip = new Audio();
+    voice.current = clip;
+    let url: string | undefined;
+    fetch("/demo/narration.mp3")
+      .then((response) => response.blob())
+      .then((blob) => {
+        url = URL.createObjectURL(blob);
+        clip.src = url;
+      })
+      .catch(() => {
+        clip.src = "/demo/narration.mp3";
+      });
+    return () => {
+      clip.pause();
+      if (url) URL.revokeObjectURL(url);
+    };
   }, []);
   useEffect(() => {
     const clip = voice.current;
