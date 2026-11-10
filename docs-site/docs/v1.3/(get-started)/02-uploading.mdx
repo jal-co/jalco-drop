@@ -1,0 +1,45 @@
+---
+title: Uploading
+description: Upload from the terminal, the admin page, or the HTTP API.
+---
+
+## From the terminal
+
+`bin/jalco-drop` uploads a file, a folder, a Scrawl capture or stdin, prints the link, and copies it to your clipboard.
+
+```bash
+jalco-drop notes.md                       # a file
+jalco-drop ~/skills/my-skill              # a folder, zipped for you
+git diff | jalco-drop -n fix.diff -e 7d   # stdin, with a name and expiry
+jalco-drop -p hunter2 report.pdf          # password protected
+jalco-drop -s demo slides.html            # a readable link: /demo
+jalco-drop -l                             # list drops
+jalco-drop -d demo                        # delete one
+```
+
+| Flag | What it does |
+| --- | --- |
+| `-p PASSWORD` | Require a password to open the drop |
+| `-e EXPIRY` | Expire after `12h`, `7d` and so on |
+| `-s SLUG` | Choose the link path instead of a random 10-character one |
+| `-n NAME` | Display name, and the extension that picks highlighting |
+
+Set `JALCO_DROP_URL` and `JALCO_DROP_TOKEN` first. The token can be the admin token or a [named token](/v1.3/tokens).
+
+## From the admin page
+
+Sign in at `/admin` with the admin token. **New drop** takes a file (drag it onto the dropzone) or pasted text, with an optional name, slug, password and expiry.
+
+<video className="drop-video" src="/videos/admin.mp4" poster="/videos/admin.jpg" controls muted playsInline preload="none" aria-label="The admin page: the drops list with uploader icons, the tokens tab, and the new token dialog" />
+
+## Over HTTP
+
+```bash
+curl -X POST "https://drop.example.com/api/items?name=notes.md&expires=7d" \
+  -H "Authorization: Bearer $JALCO_DROP_TOKEN" \
+  -H "Content-Type: text/markdown" \
+  -H "X-Drop-Password: hunter2" \
+  --data-binary @notes.md
+```
+
+The response is `{ "slug": "...", "url": "..." }`. See the [API reference](/v1.3/api) for listing and deleting.

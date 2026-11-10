@@ -4,6 +4,8 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
+## 1.4.0 (2026-11-10)
+
 - Diffs and patches open as a per-file view with an index, rendered by [Pierre Diffs](https://diffs.com): syntax colours, word-level changes and collapsed context.
 - JUnit XML and Playwright JSON reports open with failures first.
 - Excalidraw and tldraw files open as the drawing.

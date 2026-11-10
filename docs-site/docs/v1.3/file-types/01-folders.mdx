@@ -1,0 +1,14 @@
+---
+title: Share pages
+description: Folders and zips open as a "sent you" page with a file tree, a preview drawer and a generated gradient.
+sidebar:
+  label: Folders and zips
+---
+
+<video className="drop-video" src="/videos/share.mp4" poster="/videos/share.jpg" controls muted playsInline preload="none" aria-label="A zip share page: a file tree on the left, a checksum gradient on the right, and files opening in a side drawer" />
+
+Upload a folder with the CLI and it is zipped for you. The link opens a page that says who sent it, lists every file in a tree, and opens any file in a drawer: code highlighted, markdown rendered, images and media inline. **Download** gets the whole zip.
+
+The gradient on the right is generated from the upload's checksum, so every drop gets its own shape and motion in your [accent colour](/v1.3/settings). The same gradient appears on the drop's link preview card.
+
+The server reads only the zip's index and the one file you open, so large zips stay fast.

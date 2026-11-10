@@ -10,8 +10,8 @@ export default defineConfig({
   ],
   deployment: { site: "https://drop.justinlevine.me" },
   versions: {
-    current: { label: "v1.3", badge: "Latest" },
-    archived: [{ id: "v1.2" }, { id: "v1.1" }, { id: "v1.0" }],
+    current: { label: "v1.4", badge: "Latest" },
+    archived: [{ id: "v1.3" }, { id: "v1.2" }, { id: "v1.1" }, { id: "v1.0" }],
   },
   theme: {
     accent: "#ff4f00",

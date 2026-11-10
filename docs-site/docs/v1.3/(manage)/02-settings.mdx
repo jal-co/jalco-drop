@@ -1,0 +1,18 @@
+---
+title: Settings
+description: Change the site name, sender, accent colour, code theme and home redirect without redeploying.
+---
+
+<video className="drop-video" src="/videos/settings.mp4" poster="/videos/settings.jpg" controls muted playsInline preload="none" aria-label="The settings page: picking an accent swatch and a code theme from a grid of live previews" />
+
+Open **Settings** in `/admin`. Changes apply straight away, with no redeploy.
+
+| Setting | What it changes |
+| --- | --- |
+| Site name | The wordmark, defaulting to `jalco-drop` |
+| Sender name | "Name sent you" on share pages and previews |
+| Accent | The gradient, underlines, warning badges and selection. Pick a swatch or any colour |
+| Code theme | One of 16 Shiki themes, picked from live previews |
+| Home redirect | Where visitors to the bare domain go |
+
+Saved settings live in storage and override the deploy values. **Reset** goes back to the deploy values: `vars` in `wrangler.local.jsonc` on Cloudflare, or `.env` on Docker. Existing preview cards re-render the next time they are shared.
