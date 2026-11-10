@@ -83,32 +83,16 @@ Point your domain at the server through a reverse proxy with TLS, such as Caddy,
 </Tab>
 <Tab title="Neon">
 
-[Neon Functions](https://neon.com/docs/compute/functions/overview) run jalco-drop next to a Neon bucket, with an hourly trigger for expiry cleanup. You need a Neon project in a region with Functions and Object Storage: AWS us-east-1, us-east-2, eu-central-1 or ap-southeast-1.
-
-<Steps>
-<Step title="Create the project">
+You need a Neon project in us-east-1, us-east-2, eu-central-1 or ap-southeast-1.
 
 ```bash
 npx jalco-drop init my-drop --target neon
-```
-
-Setup writes `.env` with a fresh admin token. The domain is optional: without one, the site lives at the function's Neon URL.
-
-</Step>
-<Step title="Deploy">
-
-```bash
 cd my-drop
 npx neon@latest link
 npm run deploy:neon
 ```
 
-`neon.ts` declares the `drop` function, a `drops` bucket and the cleanup trigger, and `neon deploy` creates all three. `npx neon@latest functions get drop` prints the URL.
-
-</Step>
-</Steps>
-
-Neon caps a request body at 10 MB, so that is the largest single drop. Neon has no headless browser, so link previews use the plain summary card instead of a rendered image.
+Or add it to an existing Neon project with `neon functions new jalco-drop`. [Deploy on Neon](/neon) covers both, the bucket and cleanup trigger, custom domains and the 10 MB upload limit.
 
 </Tab>
 </Tabs>

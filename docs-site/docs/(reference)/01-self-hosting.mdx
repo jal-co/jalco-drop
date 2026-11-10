@@ -42,7 +42,7 @@ Run it behind a reverse proxy with TLS. Rotating `ADMIN_TOKEN` signs everyone ou
 
 ## Neon
 
-`neon.ts` is the whole deployment: the `drop` function (built to `dist/neon` by `npm run build:neon`, with the static files beside it), a private `drops` bucket, and a `cleanup` trigger that POSTs to `/__scheduled` every hour. The function only runs cleanup when the request carries Neon's `X-Neon-Trigger-Invocation-Id` header, which Neon strips from outside callers.
+[Deploy on Neon](/neon) walks through both ways to deploy. In short: `neon.ts` is the whole deployment: the `drop` function (built to `dist/neon` by `npm run build:neon`, with the static files beside it), a private `drops` bucket, and a `cleanup` trigger that POSTs to `/__scheduled` every hour. The function only runs cleanup when the request carries Neon's `X-Neon-Trigger-Invocation-Id` header, which Neon strips from outside callers.
 
 `npm run deploy:neon` reads `.env`: `ADMIN_TOKEN`, the optional `SITE_NAME`, `OWNER_NAME`, `ACCENT_COLOR`, `CODE_THEME` and `HOME_URL`, and `DROP_DOMAIN` to serve from your own hostname. The bucket's `AWS_*` credentials are injected by Neon.
 

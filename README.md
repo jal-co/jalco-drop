@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/jal-co/jalco-drop"><img src="https://shieldcn.dev/badge/-Deploy%20to%20Cloudflare-f38020.svg?logo=cloudflare" alt="Deploy to Cloudflare" /></a>
   <a href="https://render.com/deploy?repo=https://github.com/jal-co/jalco-drop"><img src="https://shieldcn.dev/badge/-Deploy%20to%20Render-000000.svg?logo=render&variant=secondary" alt="Deploy to Render" /></a>
-  <a href="https://drop.justinlevine.me/quickstart#neon"><img src="https://shieldcn.dev/badge/-Deploy%20on%20Neon-000000.svg?logo=neon&logoColor=00e599&variant=secondary" alt="Deploy on Neon" /></a>
+  <a href="https://drop.justinlevine.me/neon"><img src="https://shieldcn.dev/badge/-Deploy%20on%20Neon-000000.svg?logo=neon&logoColor=00e599&variant=secondary" alt="Deploy on Neon" /></a>
   <a href="https://drop.justinlevine.me"><img src="https://shieldcn.dev/badge/-Docs-000000.svg?logo=lu:BookOpen&variant=secondary" alt="Docs" /></a>
 </p>
 
