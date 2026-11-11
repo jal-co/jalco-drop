@@ -20,7 +20,7 @@ The Cloudflare button forks the repo into your account, creates the R2 bucket, a
 What each link opens as:
 
 - **Code and text** open highlighted with Shiki in the theme you choose, with line links (`#L12`).
-- **Markdown** renders as a document, frontmatter as a properties list. **HTML** runs in a sandboxed frame. `?view=source` shows either as source.
+- **Markdown** renders as a document with GitHub-flavoured tables, task lists and strikethrough, frontmatter as a properties list. A `<video>`, `<audio>` or `<img>` tag embeds media; other HTML shows as text. **HTML** runs in a sandboxed frame. `?view=source` shows either as source.
 - **Images, video and audio** preview in the page and seek by byte range. **PDFs** open in the browser's viewer, **CSV/TSV** as a table, and **SVG** as an image in a sandbox.
 - **Zips and folders** open as a "sent you" page with a file tree, a preview drawer, and a [Paper](https://shaders.paper.design/) Grain Gradient whose shape and motion come from the upload's checksum.
 - **[Scrawl](https://scrawl.kitlangton.com) captures** (by Kit Langton) open as a video page with the transcript and each marked moment.

@@ -39,6 +39,62 @@ async function renderFrontmatter(yaml: string) {
   return `<dl class="properties">${rows}</dl>`;
 }
 
+const ALLOWED_TAGS = new Map(
+  Object.entries({
+    video: ["src", "poster", "controls", "muted", "loop", "playsinline", "autoplay", "preload", "width", "height"],
+    audio: ["src", "controls", "muted", "loop", "autoplay", "preload"],
+    source: ["src", "type"],
+    img: ["src", "alt", "title", "width", "height"],
+    a: ["href", "title"],
+    details: ["open"],
+    summary: [],
+    br: [],
+    kbd: [],
+    sub: [],
+    sup: [],
+  }),
+);
+const URL_ATTRIBUTES = new Set(["src", "poster", "href"]);
+const SAFE_SCHEMES = new Set(["http:", "https:", "mailto:"]);
+const HTML_PART = /<!--[\s\S]*?(?:-->|$)|<(\/?)([a-zA-Z][\w-]*)((?:\s+[^\s"'<>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*)\s*\/?>/g;
+const ATTRIBUTE = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+
+function isSafeUrl(url: string) {
+  try {
+    return SAFE_SCHEMES.has(new URL(url, "https://relative.invalid/").protocol);
+  } catch {
+    return false;
+  }
+}
+
+function keepAttributes(source: string, allowed: string[]) {
+  let kept = "";
+  for (const [, rawName, ...values] of source.matchAll(ATTRIBUTE)) {
+    const name = rawName.toLowerCase();
+    const value = values.find((candidate) => candidate !== undefined);
+    if (!allowed.includes(name)) continue;
+    if (value === undefined) kept += ` ${name}`;
+    else if (!URL_ATTRIBUTES.has(name) || isSafeUrl(value)) kept += ` ${name}="${escapeHtml(value)}"`;
+  }
+  return kept;
+}
+
+function sanitizeHtml(html: string) {
+  let output = "";
+  let last = 0;
+  for (const match of html.matchAll(HTML_PART)) {
+    const [part, closing, rawName, attributes] = match;
+    output += escapeHtml(html.slice(last, match.index));
+    last = match.index + part.length;
+    if (!rawName) continue;
+    const name = rawName.toLowerCase();
+    const allowed = ALLOWED_TAGS.get(name);
+    if (!allowed) output += escapeHtml(part);
+    else output += closing ? `</${name}>` : `<${name}${keepAttributes(attributes, allowed)}>`;
+  }
+  return output + escapeHtml(html.slice(last));
+}
+
 export async function renderMarkdown(source: string) {
   const blocks = new Map<object, string>();
   const marked = new Marked({
@@ -49,7 +105,11 @@ export async function renderMarkdown(source: string) {
     },
     renderer: {
       code: (token) => blocks.get(token) ?? `<pre><code>${escapeHtml(token.text)}</code></pre>`,
-      html: (token) => escapeHtml(token.text),
+      html: (token) => sanitizeHtml(token.text),
+      link(token) {
+        return isSafeUrl(token.href) ? false : this.parser.parseInline(token.tokens);
+      },
+      image: (token) => (isSafeUrl(token.href) ? false : escapeHtml(token.text)),
     },
   });
   const frontmatter = FRONTMATTER.exec(source);

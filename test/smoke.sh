@@ -145,6 +145,14 @@ curl -s "$JALCO_DROP_URL/__scheduled?cron=0+*+*+*+*" >/dev/null
 check "hourly cleanup deletes expired drops" 0 "$(stored swept)"
 
 wait_for_rate_limit_window
+embed_page="$(curl -s "$(printf '| a | b |\n|---|---|\n| ~~x~~ | y |\n\n```ts\nconst a = 1;\n```\n\n<video controls muted src="https://example.com/v.mp4" onerror="alert(1)"></video>\n\n<video controls>\n<source src="/clip.mp4" type="video/mp4">\n</video>\n\n<img src="x" onerror="alert(2)">\n\n[bad](javascript:alert(3)) <a href="javascript:alert(4)">a</a> <constructor> <__proto__>\n' | bin/jalco-drop -n embed.md 2>/dev/null)")"
+check "markdown embeds a video" yes "$(contains '<video controls muted src="https://example.com/v.mp4"></video>' <<<"$embed_page")"
+check "markdown video keeps its source" yes "$(contains '<source src="/clip.mp4" type="video/mp4">' <<<"$embed_page")"
+check "markdown drops event handlers" no "$(contains 'onerror' <<<"$embed_page")"
+check "markdown drops javascript urls" no "$(contains 'javascript:' <<<"$embed_page")"
+check "markdown renders gfm tables" yes "$(contains '<td><del>x</del></td>' <<<"$embed_page")"
+check "markdown escapes prototype tag names" yes "$(contains '&#60;constructor&#62;' <<<"$embed_page")"
+check "markdown highlights code blocks" yes "$(contains 'class="shiki' <<<"$embed_page")"
 check "admin page asks to sign in" yes "$(curl -s "$JALCO_DROP_URL/admin" | contains 'Admin token')"
 check "wrong admin token is rejected" 401 "$(status -d token=nope "$JALCO_DROP_URL/admin/login")"
 check "admin login" 303 "$(status -c "$work/admin" -d "token=$JALCO_DROP_TOKEN" "$JALCO_DROP_URL/admin/login")"

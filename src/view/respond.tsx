@@ -3,7 +3,7 @@ import { renderToReadableStream } from "react-dom/server";
 
 const HTML_HEADERS = {
   "content-type": "text/html; charset=utf-8",
-  "content-security-policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; media-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+  "content-security-policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; media-src 'self' https:; object-src 'none'; frame-ancestors 'none'; base-uri 'none'",
   "x-robots-tag": "noindex",
   "referrer-policy": "same-origin",
 };
