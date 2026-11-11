@@ -1,0 +1,30 @@
+---
+title: Excalidraw and tldraw
+description: Excalidraw and tldraw files open as the drawing itself, not their JSON.
+sidebar:
+  label: Excalidraw and tldraw
+---
+
+<img className="drop-video" src="/file-types/excalidraw.jpg" alt="The drawing, not its JSON" />
+
+Drawings from [Excalidraw](https://excalidraw.com) and [tldraw](https://tldraw.com) open as the drawing: shapes, arrows, lines, freehand strokes and text, in their own colours. Anyone can look at it without an account or the app.
+
+| App | File |
+| --- | --- |
+| Excalidraw | `.excalidraw` or `.excalidraw.json` |
+| tldraw | `.tldr` |
+
+```bash
+jalco-drop architecture.excalidraw
+jalco-drop flow.tldr
+```
+
+<img className="drop-video" src="/file-types/tldraw.jpg" alt="Shapes, a bound arrow and a sticky note" />
+
+A few things to know:
+
+- Images pasted into a drawing show when they're stored in the file. Linked images show as a grey box.
+- A tldraw file with several pages shows its first page.
+- A drawing with more than 5,000 elements opens as highlighted JSON.
+
+The raw file is at `/<slug>/<file name>`, so whoever you send it to can download it and open it in the app to edit.

@@ -1,0 +1,17 @@
+---
+title: PDF
+description: A PDF opens in the browser's own PDF viewer, inside the drop page.
+sidebar:
+  label: PDF
+---
+
+<img className="drop-video" src="/file-types/pdf.jpg" alt="A report in the browser's PDF viewer" />
+
+A `.pdf` opens in the browser's built-in PDF viewer, so search, zoom and page thumbnails work the way the reader is used to. The viewer loads the file in byte ranges, so a long document starts showing before it has finished downloading.
+
+```bash
+jalco-drop report.pdf
+jalco-drop -p hunter2 -e 7d contract.pdf
+```
+
+**Download** in the `...` menu saves the original file.

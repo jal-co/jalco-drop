@@ -9,55 +9,27 @@ description: How each kind of file opens, and how to get at the raw bytes.
 
 | Upload | Opens as |
 | --- | --- |
-| Code and text (about 70 languages) | Highlighted in your [code theme](/settings), with line links like `#L12` |
-| Terminal output | In colour: any text with terminal colour codes keeps the colours it had |
-| JSON | A tree you can fold, open two levels deep |
-| JSON Lines (`.jsonl`, `.ndjson`) | A table, one row per line |
+| [Markdown](/file-types/markdown) | A rendered document with GitHub-flavoured tables and task lists, frontmatter as properties, and embedded video |
+| [HTML](/file-types/html) | The page, running in a sandboxed frame |
+| [PDF](/file-types/pdf) | The browser's PDF viewer |
+| [Code and text](/file-types/code) | Highlighted in your [code theme](/settings), with line links like `#L12`. Terminal output keeps its colours |
+| [JSON and JSON Lines](/file-types/json) | A tree you can fold, or a table with one row per line |
+| [CSV and TSV](/file-types/csv) | A table with sticky headers |
+| [Diffs and patches](/file-types/diffs) | Every changed file with its status, `+`/`−` counts, and old and new line numbers |
+| [Test reports](/file-types/test-reports) | JUnit XML and Playwright JSON, failures first |
+| [Images](/file-types/images) | A centred preview |
+| [SVG](/file-types/svg) | An image, rendered in a sandbox |
+| [Video and audio](/file-types/video-and-audio) | A player that seeks by byte range |
+| [Excalidraw and tldraw](/file-types/drawings) | The drawing itself |
+| [Scrawl captures](/file-types/scrawl) | The recording beside its transcript and marked moments |
+| [Superwhisper recordings](/file-types/superwhisper) | Audio on top, each line a timestamp that seeks it, speakers named |
 | [Claude Code, Codex and Pi sessions](/file-types/agent-sessions) | The conversation: prompts, replies and one line per tool call |
-| Diffs and patches (`.diff`, `.patch`, or `git diff` piped in) | Every changed file with its status, `+`/`−` counts, and old and new line numbers. Several files get an index to jump between them |
-| Test reports (JUnit `.xml` from any CI, Playwright's JSON reporter) | Pass and fail counts, failures first with their message and stack, then every suite |
-| [Excalidraw](https://excalidraw.com) and [tldraw](https://tldraw.com) files (`.excalidraw`, `.tldr`) | The drawing itself: shapes, arrows, text and sticky notes |
-| Markdown | A rendered document with GitHub-flavoured tables, task lists and strikethrough; frontmatter shows as a properties list. [Embed video and images](#html-in-markdown) with HTML tags |
-| HTML | The page, running in a sandboxed frame |
-| CSV and TSV | A table with sticky headers |
-| SVG | An image, rendered in a sandbox |
-| Images | A centred preview |
-| Video and audio | A player that seeks by byte range |
-| PDF | The browser's PDF viewer |
-| Zips and folders | A [share page](/file-types/folders) |
-| [Scrawl](https://scrawl.kitlangton.com) captures | A [recording page](/file-types/scrawl) |
-| [Superwhisper](https://superwhisper.com) recordings | A [transcript page](/file-types/superwhisper): audio on top, each line a timestamp that seeks it, speakers named |
+| [Folders and zips](/file-types/folders) | A share page with a file tree and a preview drawer |
 | Anything else | A download page |
 
-Every rendered format (markdown, HTML, CSV, SVG, JSON, diffs, reports and drawings) has a **Source** view at `?view=source`. Every drop's raw bytes are at `/<slug>/<filename>`, with `?download=1` to force a download. Raw HTML and SVG are always served as plain text or in a sandbox, so a drop can never run script on your domain.
+Every rendered format has a **Source** view at `?view=source`. Every drop's raw bytes are at `/<slug>/<filename>`, with `?download=1` to force a download. Raw HTML and SVG are always served as plain text or in a sandbox, so a drop can never run script on your domain. Text files over 512 KB open as a download page.
 
-## HTML in markdown
-
-A markdown drop can embed media with HTML, so a video plays in the page:
-
-```html
-<video controls src="https://drop.example.com/abc/demo.mp4"></video>
-```
-
-These tags work, with only these attributes:
-
-| Tag | Attributes |
-| --- | --- |
-| `video` | `src`, `poster`, `controls`, `muted`, `loop`, `playsinline`, `autoplay`, `preload`, `width`, `height` |
-| `audio` | `src`, `controls`, `muted`, `loop`, `autoplay`, `preload` |
-| `source` | `src`, `type` |
-| `img` | `src`, `alt`, `title`, `width`, `height` |
-| `a` | `href`, `title` |
-| `details` | `open` |
-| `summary`, `br`, `kbd`, `sub`, `sup` | none |
-
-Links and sources must be `http`, `https`, `mailto` or relative. Any other tag, such as `script`, `iframe` or `style`, shows as text, other attributes such as `onerror` are removed, and HTML comments are hidden. Video and audio play from your own domain or any `https` address.
-
-Most tools drop their colours when their output is piped. Ask for them to keep the colours in what you send:
-
-```bash
-FORCE_COLOR=1 npm test 2>&1 | jalco-drop -n test.log
-```
+Files inside a folder open in the same formats, in the share page's drawer.
 
 ## What each one looks like
 

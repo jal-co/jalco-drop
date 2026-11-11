@@ -4,6 +4,8 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
+- The docs have a page for each file type: what it opens as, how to upload it, and its limits.
+
 ## 1.5.0 (2026-11-11)
 
 - Markdown drops can embed media with `<video>`, `<audio>`, `<source>` and `<img>` tags, plus `<a>`, `<details>`, `<summary>`, `<br>`, `<kbd>`, `<sub>` and `<sup>`. HTML is filtered through an allow-list: any other tag shows as text, event handlers are removed, and only `http`, `https`, `mailto` and relative URLs are kept. HTML comments are hidden.

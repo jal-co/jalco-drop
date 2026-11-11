@@ -1,0 +1,36 @@
+---
+title: Video and audio
+description: Video and audio open in a player that seeks without downloading the whole file.
+sidebar:
+  label: Video and audio
+---
+
+<img className="drop-video" src="/file-types/video.jpg" alt="A screen recording with a scrubbable player" />
+
+Video and audio open in a player. It streams the file in byte ranges, so you can jump to any point in a long recording without waiting for the rest to download.
+
+| Kind | Extensions |
+| --- | --- |
+| Video | `.mp4`, `.m4v`, `.mov`, `.webm` |
+| Audio | `.mp3`, `.m4a`, `.wav`, `.ogg`, `.oga`, `.opus`, `.flac`, `.aac` |
+
+```bash
+jalco-drop demo.mp4
+jalco-drop -e 7d voice-memo.m4a
+```
+
+Which files play depends on the browser opening them. MP4 with H.264 video plays in every browser. Others, such as HEVC `.mov` recordings from an iPhone, may not, so convert them first:
+
+```bash
+ffmpeg -i recording.mov -c:v libx264 -c:a aac recording.mp4
+```
+
+<img className="drop-video" src="/file-types/audio.jpg" alt="A short clip in a player card" />
+
+## Link previews
+
+A video drop's link preview carries the video, so it can play inline in chat apps that support it.
+
+## In markdown
+
+A [markdown drop](/file-types/markdown#html-in-markdown) can embed a video or audio file with a `<video>` or `<audio>` tag, pointing at its raw link.

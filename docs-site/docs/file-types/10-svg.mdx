@@ -1,0 +1,18 @@
+---
+title: SVG
+description: An SVG opens as an image on a checkerboard, rendered in a sandbox so any script inside it can't run.
+sidebar:
+  label: SVG
+---
+
+<img className="drop-video" src="/file-types/svg.jpg" alt="A logo on a checkerboard, rendered in a sandbox" />
+
+An `.svg` opens as an image on a checkerboard, so transparent areas are easy to see.
+
+```bash
+jalco-drop logo.svg
+```
+
+SVG files can hold scripts. jalco-drop serves the rendered image with a policy that blocks them, and the raw file at `/<slug>/<file name>` is served as plain text, so an SVG drop never runs code on your site.
+
+**Source** in the `...` menu, or `?view=source` on the link, shows the SVG's markup.
