@@ -1,6 +1,6 @@
 {
   "name": "jalco-drop",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "A self-hosted file transfer interface for people and agents. Runs on Cloudflare or Docker.",
   "license": "MIT",
   "repository": {

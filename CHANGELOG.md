@@ -4,6 +4,12 @@ All notable changes to jalco-drop. Versions follow [semantic versioning](https:/
 
 ## Unreleased
 
+## 1.5.0 (2026-11-11)
+
+- Markdown drops can embed media with `<video>`, `<audio>`, `<source>` and `<img>` tags, plus `<a>`, `<details>`, `<summary>`, `<br>`, `<kbd>`, `<sub>` and `<sup>`. HTML is filtered through an allow-list: any other tag shows as text, event handlers are removed, and only `http`, `https`, `mailto` and relative URLs are kept. HTML comments are hidden.
+- Video and audio on drop pages can load from any `https` address, not only your own domain.
+- Fixed: a markdown link or autolink to a `javascript:` URL rendered as a link. It now renders as plain text.
+
 ## 1.4.0 (2026-11-10)
 
 - Diffs and patches open as a per-file view with an index, rendered by [Pierre Diffs](https://diffs.com): syntax colours, word-level changes and collapsed context.
